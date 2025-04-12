@@ -1,7 +1,8 @@
-use crate::data::parsed_transaction::ParsedTransaction;
-use crate::ui::app::MainApp;
-use eframe::egui;
 use std::{env, thread};
+
+use eframe::egui;
+
+use crate::{data::parsed_transaction::ParsedTransaction, ui::app::MainApp};
 
 pub mod comms;
 mod data;

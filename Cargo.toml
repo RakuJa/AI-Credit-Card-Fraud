@@ -34,6 +34,8 @@ dotenvy = "0.15.7"
 env_logger = "0.11.8"
 log = "0.4.27"
 
+maplit = "1.0.2"
+
 lightgbm3 = "1.0.7"
 fake = { version = "4", features = ["derive"] }
 
@@ -44,3 +46,5 @@ flume = "0.11.1"
 egui_extras = {version = "0.31", features = ["default", "image"]}
 eframe = { version = "0.31", features = ["default", "__screenshot"] }
 egui = "0.31"
+egui_virtual_list = "0.7.0"
+rand = "0.9.0"

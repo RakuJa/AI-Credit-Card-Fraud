@@ -10,11 +10,14 @@ dependencies = [
  "eframe",
  "egui",
  "egui_extras",
+ "egui_virtual_list",
  "env_logger",
  "fake",
  "flume",
  "lightgbm3",
  "log",
+ "maplit",
+ "rand 0.9.0",
  "uuid",
 ]
 
@@ -1105,6 +1108,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_virtual_list"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "892bc51cb691c5cf1d1a72b0f84f20674ce7fb482d76ed3266fae926f9390bef"
+dependencies = [
+ "egui",
+ "web-time",
+]
+
+[[package]]
 name = "either"
 version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2023,6 +2036,12 @@ checksum = "62bb907fe88d54d8d9ce32a3cceab4218ed2f6b7d35617cafe9adf84e43919cb"
 dependencies = [
  "libc",
 ]
+
+[[package]]
+name = "maplit"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
 name = "memchr"

@@ -1,9 +1,11 @@
-use crate::comms::command::Command;
-use crate::data::parsed_transaction::ParsedTransaction;
-use crate::data::transaction::Transaction;
 use fake::{Fake, Faker};
 use flume::{Receiver, Sender};
 use log::debug;
+
+use crate::{
+    comms::command::Command,
+    data::{parsed_transaction::ParsedTransaction, transaction::Transaction},
+};
 
 pub fn predict(
     model_path: &str,
