@@ -31,7 +31,7 @@ def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
 
     # Plot
     f, ax = plt.subplots(figsize=(6, 8))
-    ax = sns.countplot(x="class", data=df, hue="class", legend=False)
+    _ax = sns.countplot(x="class", data=df, hue="class", legend=False)
 
     # Describes time and amount values
     print(df[["time", "amount"]].describe())

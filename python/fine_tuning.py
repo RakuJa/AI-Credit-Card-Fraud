@@ -4,6 +4,9 @@ import optuna  # pip install optuna
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
 from polars import DataFrame
+import plotly.graph_objs as go
+import plotly.subplots as tls
+import plotly.io as pio
 
 # from pandas.core.interchange.dataframe_protocol import DataFrame
 from sklearn.metrics import (
@@ -64,7 +67,7 @@ def execute(x_train_smt, y_train_smt, x_test, y_test):
     study.optimize(func, n_trials=100)
 
     print(f"\tBest value (Accuracy): {study.best_value:.5f}")
-    print(f"\tBest params:")
+    print("\tBest params:")
 
     for key, value in study.best_params.items():
         print(f"\t\t{key}: {value}")
@@ -87,10 +90,6 @@ def execute(x_train_smt, y_train_smt, x_test, y_test):
     run_model(lgb_opt, x_train_smt, y_train_smt, x_test, y_test)
     return lgb_opt
 
-
-import plotly.graph_objs as go
-import plotly.subplots as tls
-import plotly.io as pio
 
 pio.renderers.default = "colab"
 
@@ -269,5 +268,5 @@ def model_performance(
     fig["layout"]["yaxis5"].update(dict(title="Percentage positive targeted"))
     fig.layout.title.font.size = 14
 
-    # fig.show("colab")
-    pio.write_image(fig, "model/result.png")
+    fig.show("colab")
+    #pio.write_image(fig, "model/result.png")
