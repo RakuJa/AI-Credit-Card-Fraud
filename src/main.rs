@@ -1,7 +1,6 @@
+use crate::data::parsed_transaction::ParsedTransaction;
 use crate::ui::app::MainApp;
-use comms::command::Command;
 use eframe::egui;
-use std::sync::mpsc::channel;
 use std::{env, thread};
 
 pub mod comms;
@@ -18,9 +17,9 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    let (tx_command, rx_command) = channel::<Command>();
-    let (tx_transaction, rx_transaction) = channel();
-    let app = MainApp::new(tx_command, rx_transaction);
+    let (tx_command, rx_command) = flume::bounded(1);
+    let (tx_transaction, rx_transaction) = flume::unbounded::<ParsedTransaction>();
+    let app = MainApp::new(&tx_command, rx_transaction);
 
     thread::spawn(move || prediction::predict(model_path.as_str(), &tx_transaction, &rx_command));
 

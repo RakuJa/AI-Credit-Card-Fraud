@@ -32,13 +32,15 @@ nursery = {level= "warn", priority = 1}
 [dependencies]
 dotenvy = "0.15.7"
 env_logger = "0.11.8"
+log = "0.4.27"
 
 lightgbm3 = "1.0.7"
 fake = { version = "4", features = ["derive"] }
 
 uuid = { version = "1.16", features = ["v4"] }
 
+flume = "0.11.1"
+
 egui_extras = {version = "0.31", features = ["default", "image"]}
 eframe = { version = "0.31", features = ["default", "__screenshot"] }
 egui = "0.31"
-log = "0.4.27"
