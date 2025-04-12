@@ -1,0 +1,29 @@
+[project]
+name = "ai-fraud-detection"
+version = "0.1.0"
+description = "Add your description here"
+requires-python = ">=3.13"
+dependencies = [
+    "polars==1.24.0",
+    "scikit-learn==1.6.1",
+    "matplotlib==3.10.1",
+    "seaborn==0.13.2",
+    "PyQt6",
+    "numpy",
+    "imbalanced-learn",
+    "lightgbm==4.6.0",
+    "optuna",
+    "plotly",
+    "kaleido==0.2.1",
+    "nbformat>=4.2.0",
+    "ipython",
+    "python-dotenv"
+]
+
+[dependency-groups]
+lint = [
+    "ruff"
+]
+
+[tool.uv]
+default-groups = ["lint"]

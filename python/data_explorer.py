@@ -1,0 +1,129 @@
+import polars as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+from polars import DataFrame
+
+from utils import print_separator
+
+
+def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
+    # Start by cleaning up, making everything lower case & converting data types
+    df.columns = [col.lower() for col in df.columns]
+    df.replace_column(
+        df.get_column_index("class"), df.get_column("class").cast(pd.String)
+    )
+
+    print(df.head())
+    print(df.shape)
+
+    # Non-null count for all columns
+    print("Non-null count for all columns")
+    print((df.null_count() * -1) + pd.Series("", [df.shape[0]]))
+    # Null count for all columns
+    print("Null count for all columns")
+    print(df.null_count())
+    # Percentage of unique values
+    print("Percentage of unique values")
+    print(df["class"].value_counts(normalize=True))
+
+    print_separator()
+
+    # Plot
+    f, ax = plt.subplots(figsize=(6, 8))
+    ax = sns.countplot(x="class", data=df, hue="class", legend=False)
+
+    # Describes time and amount values
+    print(df[["time", "amount"]].describe())
+    # On average, each transaction happens every time:mean seconds
+    # This two columns have outliers. It can be seen from the difference w max value
+
+    # Get data about fraud transaction vs normal transactions (count, columns)
+    fraud = df.filter(pd.col("class") == "1")
+    normal = df.filter(pd.col("class") == "0")
+    print(f"Shape of Fraud Transactions: {fraud.shape}")
+    print(f"Shape of Normal Transactions: {normal.shape}")
+
+    print_separator()
+
+    # Compare side by side the fraud and normal amounts
+    # description
+
+    n = normal["amount"].describe()
+    # Combine horizontally
+    print(
+        pd.concat(
+            [
+                n.select("statistic"),
+                fraud["amount"]
+                .describe()
+                .select("value")
+                .rename({"value": "fraud_amount"}),
+                n.select("value").rename({"value": "normal_amount"}),
+            ],
+            how="horizontal",
+        )
+    )
+    # Check the monetary amount involved in frauds
+    print(fraud["amount"].value_counts(sort=True).head())
+    #  With fraud transactions, the average amount of fraud is 122.22 USD,
+    #  the highest is 2125 USD,
+    #  the lowest is 0 and
+    #  the maximum amount is 1 USD with 113 times.
+
+    plt.figure(figsize=(8, 6))
+    plt.title("Distribution of Transaction Time", fontsize=14)
+    sns.histplot(df["time"], bins=100)
+
+    # This data set contains two-day trading information,
+    # looking at the distribution chart we see two peaks and two troughs.
+    # Most likely, the two peaks are transactions during the day because of the high volume of transactions,
+    # and the two bottoms are transactions at night when everyone is asleep.
+
+    fig, axs = plt.subplots(ncols=2, figsize=(16, 4))
+    axs[0].set_title("Distribution of Fraud Transactions")
+    sns.histplot(fraud["time"], bins=100, color="red", ax=axs[0])
+
+    sns.histplot(normal["time"], bins=100, color="green", ax=axs[1])
+    axs[1].set_title("Distribution of Genuine Transactions")
+
+    fig, axs = plt.subplots(ncols=2, figsize=(16, 4))
+    sns.histplot(fraud["amount"], bins=100, ax=axs[0])
+    axs[0].set_title("Distribution of Fraud Transactions")
+
+    sns.histplot(normal["amount"], bins=100, ax=axs[1])
+    axs[1].set_title("Distribution of Normal Transactions")
+
+    # Log transforms are useful when applied to skewed distributions
+    # because they tend to expand values in the lower magnitude range
+    # and tend to compress or reduce values in the magnitude range.
+
+    # Scale amount by log
+
+    df.insert_column(-1, pd.Series("amount_log", np.log(df["amount"] + 0.0001)))
+
+    print(df.head())
+    # Convert everything to float, otherwise we get errors with string - float operations
+    df.replace_column(
+        df.get_column_index("class"), df.get_column("class").cast(pd.Float64)
+    )
+
+    # Correlation matrix
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
+    corr = df.corr()
+    mask = np.zeros_like(corr, dtype=np.bool)
+    mask[np.triu_indices_from(mask)] = True
+
+    # Get data about fraud transaction vs normal transactions (count, columns)
+    fraud = df.filter(pd.col("class") == 1)
+    normal = df.filter(pd.col("class") == 0)
+
+    sns.heatmap(fraud.corr(), vmax=0.8, square=True, ax=ax1, cmap="afmhot", mask=mask)
+    ax1.set_title("Fraud")
+    sns.heatmap(normal.corr(), vmax=0.8, square=True, ax=ax2, cmap="YlGnBu", mask=mask)
+    ax2.set_title("Normal")
+
+    if show_graph:
+        plt.show()
+
+    return df
