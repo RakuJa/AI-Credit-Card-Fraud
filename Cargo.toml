@@ -1,0 +1,44 @@
+[package]
+name = "AI-CCF"
+version = "1.0.0"
+authors = ["RakuJa"]
+
+# Compiler info
+edition = "2024"
+rust-version = "1.86.0"
+
+description = "Credit card fraud detection"
+readme = "README.md"
+repository = "https://github.com/RakuJa/AI-Credit-Card-Fraud"
+license = "MIT"
+keywords = ["ai", "fraud-detection"]
+publish = false
+
+[lints.clippy]
+struct_field_names = {level = "allow", priority = 2}
+module_name_repetitions = {level = "allow", priority = 2}
+# We are ok with losing some data without wrapping. We are not ok with wrapping
+# Ex: 128.12 => 128 is ok, 128 => 0 is not.
+cast_possible_truncation = {level = "allow", priority = 2}
+cast_precision_loss = {level = "allow", priority = 2}
+
+future_not_send = {level = "allow", priority = 2}
+
+pedantic = {level = "warn", priority = 1}
+nursery = {level= "warn", priority = 1}
+# unwrap_used = {level = "warn", priority = 1}
+
+
+[dependencies]
+dotenvy = "0.15.7"
+env_logger = "0.11.8"
+
+lightgbm3 = "1.0.7"
+fake = { version = "4", features = ["derive"] }
+
+uuid = { version = "1.16", features = ["v4"] }
+
+egui_extras = {version = "0.31", features = ["default", "image"]}
+eframe = { version = "0.31", features = ["default", "__screenshot"] }
+egui = "0.31"
+log = "0.4.27"
