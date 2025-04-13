@@ -13,7 +13,11 @@ For the first run it's recommended to keep everything enabled
 
 After that run the main.py file.
 
-## GUI and visualization
+### Results
+
+![Model training results](python/model/result.png)
+
+## Simulation software using trained model
 ### Required dependencies
 
 sudo pacman -Syu libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
