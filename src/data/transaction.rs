@@ -91,9 +91,9 @@ pub struct Transaction {
     #[dummy(faker = "-100.0..=100.0")]
     v28: f64,
     #[dummy(faker = "0.0..=200000.0")]
-    pub(crate) time: f64,
+    pub time: f64,
     #[dummy(faker = "0.0..=30000.0")]
-    pub(crate) amount: f64,
+    pub amount: f64,
 }
 
 impl TryFrom<Vec<f64>> for Transaction {

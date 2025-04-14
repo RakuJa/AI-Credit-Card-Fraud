@@ -56,7 +56,8 @@ impl eframe::App for MainApp {
             state.current_transaction.uuid = msg.uuid;
             state.current_transaction.amount = msg.amount;
             state.current_transaction.time = msg.time;
-            state.current_transaction.fraud = msg.fraud;
+            state.current_transaction.is_fraud = msg.is_fraud;
+            state.current_transaction.certainty = msg.certainty;
         }
         ctx.request_repaint();
         CentralPanel::default().show(ctx, |ui| {
@@ -64,8 +65,8 @@ impl eframe::App for MainApp {
             credits_panel(ui);
             ui.separator();
             let mut state = self.shared_state.lock().unwrap();
-            current_transaction_title_panel(ui, state.current_transaction.fraud);
-            if state.current_transaction.fraud {
+            current_transaction_title_panel(ui, state.current_transaction.is_fraud);
+            if state.current_transaction.is_fraud {
                 let new_item = state.current_transaction.clone();
                 state
                     .transaction_history

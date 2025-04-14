@@ -22,16 +22,10 @@ pub fn predict(
             let created_transaction: Transaction = Faker.fake();
             let features: Vec<f64> = created_transaction.clone().into();
             let n_features = i32::try_from(features.len()).unwrap();
-
             let y_pred = bst
                 .predict_with_params(&features, n_features, true, "num_threads=1")
                 .unwrap()[0];
-
-            let transaction = if y_pred > 0.95 {
-                ParsedTransaction::from((created_transaction, true, y_pred))
-            } else {
-                ParsedTransaction::from((created_transaction, false, y_pred))
-            };
+            let transaction = ParsedTransaction::from((created_transaction, y_pred));
             debug!("Sent: {transaction:?}");
             tx_transaction.send(transaction).unwrap();
         }
