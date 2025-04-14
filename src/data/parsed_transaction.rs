@@ -10,6 +10,7 @@ pub struct ParsedTransaction {
     pub amount: f64,
     pub time: f64,
     pub fraud: bool,
+    pub certainty: f64,
 }
 
 impl ParsedTransaction {
@@ -19,29 +20,29 @@ impl ParsedTransaction {
             amount: 0.0,
             time: 0.0,
             fraud: false,
+            certainty: 0.,
         }
     }
 }
 
 impl Display for ParsedTransaction {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "({}, {}, {})", self.uuid, self.amount, self.time)
+        write!(
+            f,
+            "UUID: {}\nAmount: {}\nTime: {}\nCertainty: {}",
+            self.uuid, self.amount, self.time, self.certainty
+        )
     }
 }
 
-impl From<Transaction> for ParsedTransaction {
-    fn from(t: Transaction) -> Self {
-        Self::from((t, false))
-    }
-}
-
-impl From<(Transaction, bool)> for ParsedTransaction {
-    fn from(t: (Transaction, bool)) -> Self {
+impl From<(Transaction, bool, f64)> for ParsedTransaction {
+    fn from(t: (Transaction, bool, f64)) -> Self {
         Self {
             uuid: Uuid::new_v4(),
             amount: t.0.amount,
             time: t.0.time,
             fraud: t.1,
+            certainty: t.2,
         }
     }
 }

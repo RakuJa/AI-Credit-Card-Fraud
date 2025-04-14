@@ -27,10 +27,10 @@ pub fn predict(
                 .predict_with_params(&features, n_features, true, "num_threads=1")
                 .unwrap()[0];
 
-            let transaction = if y_pred > 0.9 {
-                ParsedTransaction::from((created_transaction, true))
+            let transaction = if y_pred > 0.95 {
+                ParsedTransaction::from((created_transaction, true, y_pred))
             } else {
-                ParsedTransaction::from((created_transaction, false))
+                ParsedTransaction::from((created_transaction, false, y_pred))
             };
             debug!("Sent: {transaction:?}");
             tx_transaction.send(transaction).unwrap();
