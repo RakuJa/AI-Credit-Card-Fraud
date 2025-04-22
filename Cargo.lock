@@ -10,6 +10,7 @@ dependencies = [
  "eframe",
  "egui",
  "egui_extras",
+ "egui_font_loader",
  "egui_virtual_list",
  "env_logger",
  "fake",
@@ -17,7 +18,7 @@ dependencies = [
  "lightgbm3",
  "log",
  "maplit",
- "rand 0.9.0",
+ "rand 0.9.1",
  "uuid",
 ]
 
@@ -1090,6 +1091,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "egui_font_loader"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1b605b1e1794d96262ddffc1320e237985cf9de56c37238d506d00f6cd9bdbd4"
+dependencies = [
+ "egui",
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "egui_glow"
 version = "0.31.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1278,7 +1289,7 @@ checksum = "2f5f203b70a419cb8880d1cfe6bebe488add0a0307d404e9f24021e5fd864b80"
 dependencies = [
  "deunicode",
  "dummy",
- "rand 0.9.0",
+ "rand 0.9.1",
 ]
 
 [[package]]
@@ -2832,13 +2843,12 @@ dependencies = [
 
 [[package]]
 name = "rand"
-version = "0.9.0"
+version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3779b94aeb87e8bd4e834cee3650289ee9e0d5677f976ecdb6d219e5f4f6cd94"
+checksum = "9fbfd9d094a40bf3ae768db9361049ace4c0e04a4fd6b359518bd7b73a73dd97"
 dependencies = [
  "rand_chacha 0.9.0",
  "rand_core 0.9.3",
- "zerocopy 0.8.24",
 ]
 
 [[package]]

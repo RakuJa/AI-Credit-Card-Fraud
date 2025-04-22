@@ -8,7 +8,6 @@ use flume::{Receiver, Sender};
 use log::debug;
 use rand::{Rng, SeedableRng, rngs::StdRng};
 
-use crate::ui::font_handler::load_fonts;
 use crate::{
     comms::{
         command::Command,
@@ -16,6 +15,8 @@ use crate::{
     },
     data::parsed_transaction::ParsedTransaction,
 };
+use egui_font_loader::LoaderFontData;
+use egui_font_loader::load_fonts;
 
 pub struct MainApp {
     shared_state: Arc<Mutex<SharedState>>,
@@ -33,8 +34,17 @@ impl MainApp {
     ) -> Self {
         // This is also where you can customize the look and feel of egui using
         // `cc.egui_ctx.set_visuals` and `cc.egui_ctx.set_fonts`.
-        load_fonts(&cc.egui_ctx);
-
+        let fonts = vec![
+            LoaderFontData {
+                name: "GoodTimesRg".into(),
+                path: "ui/fonts/Good-times-rg.ttf".into(),
+            },
+            LoaderFontData {
+                name: "Pixelify".into(),
+                path: "ui/fonts/PixelifySans-VariableFont_wght.ttf".into(),
+            },
+        ];
+        load_fonts(&cc.egui_ctx, fonts).unwrap();
         let x = Self {
             shared_state: Arc::new(Mutex::new(SharedState::default())),
             command_sender: tx.clone(),
@@ -49,7 +59,6 @@ impl MainApp {
 
 impl eframe::App for MainApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        load_fonts(ctx);
         while let Ok(msg) = self.update_receiver.try_recv() {
             let mut state = self.shared_state.lock().unwrap();
             debug!("Received: {msg:?}");
@@ -175,7 +184,7 @@ fn credits_panel(ui: &mut egui::Ui) {
                     .color(Color32::BLACK)
                     .font(FontId {
                         size: 15.0,
-                        family: FontFamily::Monospace, //FontFamily::Name("GoodTimesRg".into())
+                        family: FontFamily::Name("GoodTimesRg".into()), //FontFamily::Monospace, //FontFamily::Name("GoodTimesRg".into())
                     }),
             );
             ui.heading(
