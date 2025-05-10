@@ -174,7 +174,7 @@ fn credits_panel(ui: &mut egui::Ui) {
             ui.set_min_size(Vec2::new(50., 50.));
             let img_size = Vec2::new(ui.available_width(), ui.available_height());
             ui.add(
-                egui::Image::new(egui::include_image!("../../ui/icons/icon.png"))
+                egui::Image::new(egui::include_image!("../../ui/icons/icon_small.png"))
                     .fit_to_exact_size(img_size), //.corner_radius(10),
             );
         });
