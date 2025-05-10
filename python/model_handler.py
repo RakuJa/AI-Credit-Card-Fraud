@@ -14,22 +14,37 @@ from sklearn.metrics import (
 )
 
 
-def plot_roc_cur(fper, tper):
+def plot_roc_cur(
+    model_name: str, fper, tper, show_graph: bool = False, save_graph: bool = False
+):
+    plt.clf()
+    plt.cla()
     plt.plot(fper, tper, color="orange", label="ROC")
     plt.plot([0, 1], [0, 1], color="darkblue", linestyle="--")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
     plt.title("Receiver Operating Characteristic (ROC) Curve")
     plt.legend()
-    plt.show()
+    if save_graph:
+        plt.savefig(f"images/{model_name}_roc_curve.png", transparent=True)
+    if show_graph:
+        plt.show()
+    plt.clf()
 
 
-def run_model(model, x_train, y_train, x_test, y_test, verbose=True):
+def run_model(
+    model_name: str,
+    model,
+    x_train,
+    y_train,
+    x_test,
+    y_test,
+    verbose=True,
+    show_graph: bool = False,
+    save_graph: bool = True,
+):
     t0 = time.time()
-    if not verbose:
-        model.fit(x_train, y_train, verbose=0)
-    else:
-        model.fit(x_train, y_train)
+    model.fit(x_train, y_train)
     y_pred = model.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred)
@@ -61,7 +76,7 @@ def run_model(model, x_train, y_train, x_test, y_test, verbose=True):
     probs = model.predict_proba(x_test)
     probs = probs[:, 1]
     fper, tper, thresholds = roc_curve(y_test, probs)
-    plot_roc_cur(fper, tper)
+    plot_roc_cur(model_name, fper, tper, show_graph, save_graph)
 
     # Updated confusion matrix plotting
     ConfusionMatrixDisplay.from_estimator(
@@ -72,6 +87,9 @@ def run_model(model, x_train, y_train, x_test, y_test, verbose=True):
         display_labels=model.classes_,  # Optional: show class labels
     )
     plt.title("Confusion Matrix")
-    plt.show()
+    if save_graph:
+        plt.savefig(f"images/{model_name}_confusion_matrix.png", transparent=True)
+    if show_graph:
+        plt.show()
 
     return model, accuracy, roc_auc, f1, coh_kap, time_taken

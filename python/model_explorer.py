@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
@@ -10,7 +11,14 @@ import lightgbm as lgb
 
 
 # Logistic Regression with SMOTE
-def logistic_regression(x_train_smt, y_train_smt, x_test, y_test):
+def logistic_regression(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
     params_lr = {"penalty": "l1", "solver": "liblinear"}  # "class_weight": "balanced"}
 
     model_lrsmt = LogisticRegression(**params_lr)
@@ -21,12 +29,28 @@ def logistic_regression(x_train_smt, y_train_smt, x_test, y_test):
         f1_score_lrsmt,
         coh_kap_lrsmt,
         tt_lrsmt,
-    ) = run_model(model_lrsmt, x_train_smt, y_train_smt, x_test, y_test)
+    ) = run_model(
+        "logistic_regression",
+        model_lrsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
     return accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt, tt_lrsmt
 
 
 # Decision Tree
-def decision_tree(x_train_smt, y_train_smt, x_test, y_test):
+def decision_tree(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
     params_dt = {"max_depth": 16, "max_features": "sqrt"}
 
     model_dtsmt = DecisionTreeClassifier(**params_dt)
@@ -37,11 +61,27 @@ def decision_tree(x_train_smt, y_train_smt, x_test, y_test):
         f1_score_dtsmt,
         coh_kap_dtsmt,
         tt_dtsmt,
-    ) = run_model(model_dtsmt, x_train_smt, y_train_smt, x_test, y_test)
+    ) = run_model(
+        "decision_tree",
+        model_dtsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
     return accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt, tt_dtsmt
 
 
-def random_forest(x_train_smt, y_train_smt, x_test, y_test):
+def random_forest(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
     # Random Forest with SMOTE
     model_rfsmt = RandomForestClassifier()
     (
@@ -51,11 +91,27 @@ def random_forest(x_train_smt, y_train_smt, x_test, y_test):
         f1_score_rfsmt,
         coh_kap_rfsmt,
         tt_rfsmt,
-    ) = run_model(model_rfsmt, x_train_smt, y_train_smt, x_test, y_test)
+    ) = run_model(
+        "random_forest",
+        model_rfsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
     return accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt, tt_rfsmt
 
 
-def lightGBM(x_train_smt, y_train_smt, x_test, y_test):
+def lightGBM(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
     # Light GBM with SMOTE
 
     model_lgbsmt = lgb.LGBMClassifier()
@@ -66,11 +122,22 @@ def lightGBM(x_train_smt, y_train_smt, x_test, y_test):
         f1_score_lgbsmt,
         coh_kap_lgbsmt,
         tt_lgbsmt,
-    ) = run_model(model_lgbsmt, x_train_smt, y_train_smt, x_test, y_test)
+    ) = run_model(
+        "lightGBM",
+        model_lgbsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
     return accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt, tt_lgbsmt
 
 
-def visualize_model_accuracy_and_time(model_data):
+def visualize_model_accuracy_and_time(
+    model_data, show_graph: bool = True, save_graph: bool = False
+):
     data = pd.DataFrame(model_data)
 
     fig, ax1 = plt.subplots(figsize=(12, 10))
@@ -94,22 +161,64 @@ def visualize_model_accuracy_and_time(model_data):
     ax2.set_ylabel("F1 Score", fontsize=13, color=color)
     ax2 = sns.lineplot(x="Model", y="F1 Score", data=data, sort=False, color=color)
     ax2.tick_params(axis="y", color=color)
-    plt.show()
+    if save_graph:
+        plt.savefig("images/models_f1_and_time.png", transparent=True)
+    if show_graph:
+        plt.show()
 
 
-def explore_models(x_train_smt, y_train_smt, x_test, y_test):
+def explore_models(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+):
     accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt, tt_lrsmt = (
-        logistic_regression(x_train_smt, y_train_smt, x_test, y_test)
+        logistic_regression(
+            x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs
+        )
     )
     accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt, tt_dtsmt = (
-        decision_tree(x_train_smt, y_train_smt, x_test, y_test)
+        decision_tree(
+            x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs
+        )
     )
     accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt, tt_rfsmt = (
-        random_forest(x_train_smt, y_train_smt, x_test, y_test)
+        random_forest(
+            x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs
+        )
     )
 
     accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt, tt_lgbsmt = (
-        lightGBM(x_train_smt, y_train_smt, x_test, y_test)
+        lightGBM(x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs)
+    )
+
+
+    plot_spider_chart(
+        "logistic_regression",
+        [accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs
+    )
+    plot_spider_chart(
+        "decision_tree",
+        [accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs
+    )
+    plot_spider_chart(
+        "random_forest",
+        [accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs
+    )
+    plot_spider_chart(
+        "lightGBM",
+        [accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs
     )
 
     accuracy_scores = [accuracy_lrsmt, accuracy_dtsmt, accuracy_rfsmt, accuracy_lgbsmt]
@@ -135,4 +244,31 @@ def explore_models(x_train_smt, y_train_smt, x_test, y_test):
         "Cohen_Kappa": coh_kap_scores,
         "Time taken": tt,
     }
-    visualize_model_accuracy_and_time(model_data)
+    visualize_model_accuracy_and_time(
+        model_data, show_graph=show_graphs, save_graph=save_graphs
+    )
+
+
+def plot_spider_chart(
+    model_name: str,
+    values: list[float],
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+):
+    metrics = ["Accuracy", "ROC AUC", "F1 Score", "Cohen Kappa"]
+    num_vars = len(values)
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    values += values[:1]  # Close the loop
+    angles += angles[:1]
+
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw=dict(polar=True))
+    ax.fill(angles, values, color="blue", alpha=0.25)
+    ax.plot(angles, values, color="blue", marker="o")
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(metrics)
+    ax.set_yticklabels([])
+    ax.set_title("Model Performance Radar Chart", size=14, pad=20)
+    if save_graphs:
+        plt.savefig(f"images/{model_name}_spider_chart", transparent=True)
+    if show_graphs:
+        plt.show()

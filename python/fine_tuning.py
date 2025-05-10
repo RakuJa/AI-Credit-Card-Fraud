@@ -61,7 +61,12 @@ def objective(trial, x_train_smt, y_train_smt):
     return np.mean(scores)
 
 
-def execute(x_train_smt, y_train_smt, x_test, y_test):
+def execute(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+):
     study = optuna.create_study(direction="maximize")
     func = lambda trial: objective(trial, x_train_smt, y_train_smt)
     study.optimize(func, n_trials=100)
@@ -87,7 +92,17 @@ def execute(x_train_smt, y_train_smt, x_test, y_test):
     }
 
     lgb_opt = lgb.LGBMClassifier(**param_lgb)
-    run_model(lgb_opt, x_train_smt, y_train_smt, x_test, y_test)
+    run_model(
+        model=lgb_opt,
+        x_train=x_train_smt,
+        y_train=y_train_smt,
+        x_test=x_test,
+        y_test=y_test,
+        show_graph=False,
+        save_graph=False,
+        verbose=False,
+        model_name="LightGBM",
+    )
     return lgb_opt
 
 
@@ -164,34 +179,25 @@ def model_performance(
     )
 
     # Feature importance
-    coef_sumry = pd.DataFrame(
-        {
-            "features": model.feature_name_,  # LightGBM stores feature names here
-            "coefficients": model.feature_importances_,  # Importance scores (not actual coefficients)
-        }
+    coefficients = pd.DataFrame({"coefficients": model.feature_importances_})
+    column_data = pd.DataFrame(
+        {"features": df.drop("amount_log").drop("class").columns}
     )
-    coef_sumry.columns = ["features", "coefficients"]
-    coef_sumry = coef_sumry.filter(pd.col("coefficients") != 0).sort(
-        by="coefficients", descending=True
+
+    # Combine and process
+    coef_sumry = (
+        coefficients.hstack(column_data)
+        .sort("coefficients", descending=True)
+        .filter(pd.col("coefficients") != 0)
     )
-    x = DataFrame()
-    column_names = []
-    coefficients = []
-    for el in coef_sumry.rows():
-        index = int(el[0].split("Column_")[1])
-        column_names.append(
-            df.select(pd.nth(index)).select(pd.first()).get_columns()[0].name
-        )
-        coefficients.append(el[1])
-    x.insert_column(0, pd.Series("features", column_names))
-    x.insert_column(1, pd.Series("coefficients", coefficients))
-    coef_sumry = x
+
+    # Feature coefficients visualization
     trace6 = go.Bar(
-        x=coef_sumry["features"],
-        y=coef_sumry["coefficients"],
-        name="features",
+        x=coef_sumry["features"].to_list(),
+        y=coef_sumry["coefficients"].to_list(),
+        name="coefficients",
         marker=dict(
-            color="Violet",
+            color=coef_sumry["coefficients"].to_list(),
             colorscale="Viridis",
             line=dict(width=0.6, color="black"),
         ),
@@ -268,5 +274,5 @@ def model_performance(
     fig["layout"]["yaxis5"].update(dict(title="Percentage positive targeted"))
     fig.layout.title.font.size = 14
 
-    fig.show("colab")
-    #pio.write_image(fig, "model/result.png")
+    #fig.show("colab")
+    pio.write_image(fig, "model/result.png")

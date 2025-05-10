@@ -7,7 +7,9 @@ from polars import DataFrame
 from utils import print_separator
 
 
-def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
+def explore_dataset(
+    df: DataFrame, show_graphs: bool = False, save_graphs: bool = False
+) -> DataFrame:
     # Start by cleaning up, making everything lower case & converting data types
     df.columns = [col.lower() for col in df.columns]
     df.replace_column(
@@ -30,8 +32,11 @@ def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
     print_separator()
 
     # Plot
-    f, ax = plt.subplots(figsize=(6, 8))
+    f, ax = plt.subplots(figsize=(8, 10))
     _ax = sns.countplot(x="class", data=df, hue="class", legend=False)
+
+    if save_graphs:
+        plt.savefig("images/imbalanced_dataset.png", transparent=True)
 
     # Describes time and amount values
     print(df[["time", "amount"]].describe())
@@ -84,15 +89,21 @@ def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
     axs[0].set_title("Distribution of Fraud Transactions")
     sns.histplot(fraud["time"], bins=100, color="red", ax=axs[0])
 
-    sns.histplot(normal["time"], bins=100, color="green", ax=axs[1])
+    sns.histplot(normal["time"], bins=100, color="cyan", ax=axs[1])
     axs[1].set_title("Distribution of Genuine Transactions")
 
+    if save_graphs:
+        plt.savefig("images/time_distribution.png", transparent=True)
+
     fig, axs = plt.subplots(ncols=2, figsize=(16, 4))
-    sns.histplot(fraud["amount"], bins=100, ax=axs[0])
+    sns.histplot(fraud["amount"], bins=100, color="red", ax=axs[0])
     axs[0].set_title("Distribution of Fraud Transactions")
 
-    sns.histplot(normal["amount"], bins=100, ax=axs[1])
+    sns.histplot(normal["amount"], bins=100, color="cyan", ax=axs[1])
     axs[1].set_title("Distribution of Normal Transactions")
+
+    if save_graphs:
+        plt.savefig("images/transaction_distribution.png", transparent=True)
 
     # Log transforms are useful when applied to skewed distributions
     # because they tend to expand values in the lower magnitude range
@@ -103,27 +114,59 @@ def explore_dataset(df: DataFrame, show_graph: bool = False) -> DataFrame:
     df.insert_column(-1, pd.Series("amount_log", np.log(df["amount"] + 0.0001)))
 
     print(df.head())
-    # Convert everything to float, otherwise we get errors with string - float operations
-    df.replace_column(
-        df.get_column_index("class"), df.get_column("class").cast(pd.Float64)
-    )
 
-    # Correlation matrix
-    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
-    corr = df.corr()
+    # Convert everything to float, otherwise we get errors with string - float operations
+    _tmp = df.get_column("class").cast(pd.Float64)
+    df = df.drop("class")
+    df.insert_column(-1, _tmp)
+
+    # Feature correlation study
+    corr = df.corr().to_pandas()
     mask = np.zeros_like(corr, dtype=np.bool)
     mask[np.triu_indices_from(mask)] = True
+
+    f, (ax1) = plt.subplots(1, 1, figsize=(18, 8))
+    sns.heatmap(
+        df.corr().to_pandas(), vmax=0.8, square=True, ax=ax1, cmap="magma_r", mask=mask
+    )
+    ax1.set_title("Whole Dataset feature correlation")
+    ax1.set_yticklabels(df.columns, rotation=0)
+    if save_graphs:
+        plt.savefig("images/feature_correlation.png", transparent=True)
+    if show_graphs:
+        plt.show()
+
+    # Prepare plot in which we'll put two correlation matrix (fraud and normal)
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 8))
 
     # Get data about fraud transaction vs normal transactions (count, columns)
     fraud = df.filter(pd.col("class") == 1)
     normal = df.filter(pd.col("class") == 0)
 
-    sns.heatmap(fraud.corr(), vmax=0.8, square=True, ax=ax1, cmap="afmhot", mask=mask)
+    # mask used to remove useless (mirrored) data.
+    sns.heatmap(
+        fraud.corr().to_pandas(),
+        vmax=0.8,
+        square=True,
+        ax=ax1,
+        cmap="rocket_r",
+        mask=mask,
+    )
     ax1.set_title("Fraud")
-    sns.heatmap(normal.corr(), vmax=0.8, square=True, ax=ax2, cmap="YlGnBu", mask=mask)
+    ax1.set_yticklabels(df.columns, rotation=0)
+    sns.heatmap(
+        normal.corr().to_pandas(),
+        vmax=0.8,
+        square=True,
+        ax=ax2,
+        cmap="YlGnBu",
+        mask=mask,
+    )
     ax2.set_title("Normal")
-
-    if show_graph:
+    ax2.set_yticklabels(df.columns, rotation=0)
+    if save_graphs:
+        plt.savefig("images/feature_correlation_comparison.png", transparent=True)
+    if show_graphs:
         plt.show()
 
     return df

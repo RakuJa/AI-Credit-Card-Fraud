@@ -14,6 +14,19 @@ _Built with_
 
 [![MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/emilk/egui/blob/master/LICENSE-MIT)
 
+## Simulation software using trained model
+
+![Ui](ui.png)
+
+### Required dependencies
+
+sudo pacman -Syu libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+
+### Run it
+```bash
+cargo run --release
+```
+
 ## Training
 
 ### Where to find the dataset
@@ -29,19 +42,78 @@ After that run the main.py file.
 
 ### Results
 
+#### Overview
+
 ![Model training results](python/model/result.png)
 
-## Simulation software using trained model
+#### In depth
 
-![Ui](ui.png)
+##### Confusion Matrices
 
-Ferris is a placeholder that should be swapped later on.
+<table width="100%">
+  <tr>
+    <td width="50%">Decision Tree Confusion Matrix</td>
+    <td width="50%">Random Forest Confusion Matrix</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/decision_tree_confusion_matrix.png"></td>
+    <td width="50%"><img src="python/images/random_forest_confusion_matrix.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">Logistic Regression Confusion Matrix</td>
+    <td width="50%">LightGBM Confusion Matrix</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/logistic_regression_confusion_matrix.png"></td>
+    <td width="50%"><img src="python/images/lightGBM_confusion_matrix.png"></td>
+  </tr>
+</table>
 
-### Required dependencies
+##### Roc Curves
 
-sudo pacman -Syu libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
+<table width="100%">
+  <tr>
+    <td width="50%">Decision Tree Roc Curve</td>
+    <td width="50%">Random Forest Roc Curve</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/decision_tree_roc_curve.png"></td>
+    <td width="50%"><img src="python/images/random_forest_roc_curve.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">Logistic Regression Roc Curve</td>
+    <td width="50%">LightGBM Roc Curve</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/logistic_regression_roc_curve.png"></td>
+    <td width="50%"><img src="python/images/lightGBM_roc_curve.png"></td>
+  </tr>
+</table>
 
-### Run it
-```bash
-cargo run --release
-```
+##### Spider Charts
+
+<table width="100%">
+  <tr>
+    <td width="50%">Decision Tree Spider Chart</td>
+    <td width="50%">Random Forest Spider Chart</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/decision_tree_spider_chart.png"></td>
+    <td width="50%"><img src="python/images/random_forest_spider_chart.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">Logistic Regression Spider Chart</td>
+    <td width="50%">LightGBM Spider Chart</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/logistic_regression_spider_chart.png"></td>
+    <td width="50%"><img src="python/images/lightGBM_spider_chart.png"></td>
+  </tr>
+</table>
+
+##### Model F1 Score and Time
+
+![Model training results](python/images/models_f1_and_time.png)
+
+Random Forest and LightGBM are the best w.r.t. all the parameters we've chosen.
+But Random Forest is too slow and we choose LightGBM.

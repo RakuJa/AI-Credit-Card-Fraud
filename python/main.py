@@ -20,10 +20,17 @@ def main():
 
     raw_data: DataFrame = load_dataset("dataset/data.arff")
     if os.getenv("EXPLORE_DATASET", "TRUE").upper() == "TRUE":
-        explore_dataset(df=raw_data.clone(), show_graph=True)
+        _df = explore_dataset(df=raw_data.clone(), show_graphs=False, save_graphs=True)
     df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(df=raw_data)
     if os.getenv("EXPLORE_MODELS", "TRUE").upper() == "TRUE":
-        explore_models(x_train_smt, y_train_smt, x_test, y_test)
+        explore_models(
+            x_train_smt,
+            y_train_smt,
+            x_test,
+            y_test,
+            show_graphs=False,
+            save_graphs=True,
+        )
     if Path("model/lgb.pkl").exists():
         lgb_opt: LGBMClassifier = joblib.load("model/lgb.pkl")
     else:
