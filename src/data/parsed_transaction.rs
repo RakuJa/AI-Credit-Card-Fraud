@@ -42,7 +42,7 @@ impl From<(Transaction, f64)> for ParsedTransaction {
             amount: t.0.amount,
             time: t.0.time,
             is_fraud: t.1 > 0.95,
-            certainty: t.1,
+            certainty: t.1 * 100.,
         }
     }
 }

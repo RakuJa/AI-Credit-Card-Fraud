@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use egui::{
-    Button, CentralPanel, Color32, FontFamily, FontId, Frame, Margin, RichText, ScrollArea,
+    Button, CentralPanel, Color32, FontFamily, FontId, Frame, Margin, RichText, ScrollArea, Vec2,
 };
 use egui_virtual_list::VirtualList;
 use flume::{Receiver, Sender};
@@ -171,11 +171,11 @@ impl eframe::App for MainApp {
 fn credits_panel(ui: &mut egui::Ui) {
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
+            ui.set_min_size(Vec2::new(50., 50.));
+            let img_size = Vec2::new(ui.available_width(), ui.available_height());
             ui.add(
-                egui::Image::new(egui::include_image!("../../ui/icons/ferris.png"))
-                    .maintain_aspect_ratio(true)
-                    .max_width(100.0)
-                    .corner_radius(10),
+                egui::Image::new(egui::include_image!("../../ui/icons/icon.png"))
+                    .fit_to_exact_size(img_size), //.corner_radius(10),
             );
         });
         ui.vertical(|ui| {
