@@ -110,8 +110,9 @@ pio.renderers.default = "colab"
 
 
 def model_performance(
-    model: LGBMClassifier, df: DataFrame, x_test: np.array, y_test: np.array
+    model: LGBMClassifier, df: DataFrame, x_test: np.array, y_test: pd.Series
 ):
+    y_test = pd.DataFrame(y_test).to_numpy()
     y_pred = model.predict(x_test)
     y_score = model.predict_proba(x_test)[:, 1]
 
@@ -153,7 +154,6 @@ def model_performance(
         opacity=0.8,
         marker=dict(color=colors, line=dict(color="#000000", width=1.5)),
     )
-
     # Roc curve
     model_roc_auc = round(roc_auc_score(y_test, y_score), 3)
     fpr, tpr, t = roc_curve(y_test, y_score)
@@ -204,7 +204,6 @@ def model_performance(
     )
 
     # Cumulative gain
-
     pos = (
         DataFrame(y_test).to_dummies().to_numpy()
     )  # pandas.get_dummies(y_test).to_numpy()
@@ -274,5 +273,5 @@ def model_performance(
     fig["layout"]["yaxis5"].update(dict(title="Percentage positive targeted"))
     fig.layout.title.font.size = 14
 
-    #fig.show("colab")
+    # fig.show("colab")
     pio.write_image(fig, "model/result.png")

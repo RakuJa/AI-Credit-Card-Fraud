@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 from polars import DataFrame
+from scipy.stats import pearsonr
 
 from utils import print_separator
 
@@ -169,4 +170,52 @@ def explore_dataset(
     if show_graphs:
         plt.show()
 
+    # Amount correlation
+
+    # Direct correlation
+    plot_feature_corr_scatter(
+        df, ("v20", "amount"), "amount_and_v20_correlation", save_graphs
+    )
+    plot_feature_corr_scatter(
+        df, ("v7", "amount"), "amount_and_v7_correlation", save_graphs
+    )
+
+    # Inverse correlation
+    plot_feature_corr_scatter(
+        df, ("v1", "amount"), "amount_and_v1_inv_correlation", save_graphs
+    )
+    plot_feature_corr_scatter(
+        df, ("v2", "amount"), "amount_and_v2_inv_correlation", save_graphs
+    )
+    plot_feature_corr_scatter(
+        df, ("v5", "amount"), "amount_and_v5_inv_correlation", save_graphs
+    )
+
+    if show_graphs:
+        plt.show()
     return df
+
+
+def plot_feature_corr_scatter(
+    df: DataFrame, features: (str, str), file_name: str, save_graph: bool = False
+):
+    first_key, second_key = features
+    s = sns.lmplot(
+        x=first_key,
+        y=second_key,
+        data=df,
+        hue="class",
+        fit_reg=True,
+        scatter_kws={"s": 2},
+    )
+    r, _ = pearsonr(df.get_column(first_key), df.get_column(second_key))
+    plt.text(
+        0.95,
+        0.85,
+        f"r = {r:.2f}",
+        ha="right",
+        va="center",
+        transform=s.ax.transAxes,
+    )
+    if save_graph:
+        plt.savefig(f"images/{file_name}.png", transparent=True)

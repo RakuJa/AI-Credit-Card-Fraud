@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import numpy as np
+import torch
 from matplotlib import pyplot as plt
+from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -8,6 +12,11 @@ import seaborn as sns
 
 from model_handler import run_model
 import lightgbm as lgb
+import catboost as cb
+import xgboost as xgb
+from sklearn.ensemble import AdaBoostClassifier
+
+from tabnet_model import run_tabnet_model
 
 
 # Logistic Regression with SMOTE
@@ -135,6 +144,156 @@ def lightGBM(
     return accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt, tt_lgbsmt
 
 
+def catboost(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
+    params_cb = {"iterations": 20, "max_depth": 16}
+
+    model_cbsmt = cb.CatBoostClassifier(**params_cb)
+    (
+        model_cbsmt,
+        accuracy_cbsmt,
+        roc_auc_cbsmt,
+        f1_score_cbsmt,
+        coh_kap_cbsmt,
+        tt_cbsmt,
+    ) = run_model(
+        "catboost",
+        model_cbsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
+    return accuracy_cbsmt, roc_auc_cbsmt, f1_score_cbsmt, coh_kap_cbsmt, tt_cbsmt
+
+
+def xgboost(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
+    params_xgb = {"n_estimators": 20, "max_depth": 16}
+
+    model_xgbsmt = xgb.XGBClassifier(**params_xgb)
+    (
+        model_xgbsmt,
+        accuracy_xgbsmt,
+        roc_auc_xgbsmt,
+        f1_score_xgbsmt,
+        coh_kap_xgbsmt,
+        tt_xgbsmt,
+    ) = run_model(
+        "xgboost",
+        model_xgbsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
+    return accuracy_xgbsmt, roc_auc_xgbsmt, f1_score_xgbsmt, coh_kap_xgbsmt, tt_xgbsmt
+
+
+def adaboost(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
+    model_adasmt = AdaBoostClassifier(
+        DecisionTreeClassifier(max_depth=2),
+        n_estimators=50,
+        algorithm="SAMME",
+        learning_rate=0.5,
+    )
+    (
+        model_adasmt,
+        accuracy_adasmt,
+        roc_auc_adasmt,
+        f1_score_adasmt,
+        coh_kap_adasmt,
+        tt_adasmt,
+    ) = run_model(
+        "adaboost",
+        model_adasmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        show_graph=show_graphs,
+        save_graph=save_graphs,
+    )
+    return accuracy_adasmt, roc_auc_adasmt, f1_score_adasmt, coh_kap_adasmt, tt_adasmt
+
+
+def tabnet(
+    x_train_smt,
+    y_train_smt,
+    x_test,
+    y_test,
+    show_graphs: bool = False,
+    save_graphs: bool = False,
+) -> (float, float, float, float, float):
+    tabnet_params = dict(
+        n_d=64,
+        n_a=64,
+        n_steps=5,
+        gamma=1.5,
+        n_independent=2,
+        n_shared=2,
+        cat_idxs=[],
+        cat_dims=[],
+        cat_emb_dim=1,
+        lambda_sparse=1e-4,
+        momentum=0.3,
+        clip_value=2.0,
+        optimizer_fn=torch.optim.Adam,
+        optimizer_params=dict(lr=2e-2, weight_decay=1e-5),
+        scheduler_params=dict(mode="max", patience=5, min_lr=1e-5, factor=0.9),
+        scheduler_fn=torch.optim.lr_scheduler.ReduceLROnPlateau,
+        mask_type="entmax",
+        verbose=10,
+    )
+    model_tabnetsmt = TabNetClassifier(**tabnet_params)
+    (
+        model_tabnetsmt,
+        accuracy_tabnetsmt,
+        roc_auc_tabnetsmt,
+        f1_score_tabnetsmt,
+        coh_kap_tabnetsmt,
+        tt_tabnetsmt,
+    ) = run_tabnet_model(
+        model_tabnetsmt,
+        x_train_smt,
+        y_train_smt,
+        x_test,
+        y_test,
+        save_graph=save_graphs,
+        show_graph=show_graphs,
+    )
+    return (
+        accuracy_tabnetsmt,
+        roc_auc_tabnetsmt,
+        f1_score_tabnetsmt,
+        coh_kap_tabnetsmt,
+        tt_tabnetsmt,
+    )
+
+
 def visualize_model_accuracy_and_time(
     model_data, show_graph: bool = True, save_graph: bool = False
 ):
@@ -175,6 +334,14 @@ def explore_models(
     show_graphs: bool = False,
     save_graphs: bool = False,
 ):
+    (
+        accuracy_tabnetsmt,
+        roc_auc_tabnetsmt,
+        f1_score_tabnetsmt,
+        coh_kap_tabnetsmt,
+        tt_tabnetsmt,
+    ) = tabnet(x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs)
+
     accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt, tt_lrsmt = (
         logistic_regression(
             x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs
@@ -195,37 +362,121 @@ def explore_models(
         lightGBM(x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs)
     )
 
+    accuracy_cbsmt, roc_auc_cbsmt, f1_score_cbsmt, coh_kap_cbsmt, tt_cbsmt = catboost(
+        x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs
+    )
+
+    accuracy_xgbsmt, roc_auc_xgbsmt, f1_score_xgbsmt, coh_kap_xgbsmt, tt_xgbsmt = (
+        xgboost(x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs)
+    )
+
+    accuracy_adasmt, roc_auc_adasmt, f1_score_adasmt, coh_kap_adasmt, tt_adasmt = (
+        adaboost(x_train_smt, y_train_smt, x_test, y_test, show_graphs, save_graphs)
+    )
 
     plot_spider_chart(
         "logistic_regression",
         [accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt],
         show_graphs=show_graphs,
-        save_graphs=save_graphs
+        save_graphs=save_graphs,
     )
     plot_spider_chart(
         "decision_tree",
         [accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt],
         show_graphs=show_graphs,
-        save_graphs=save_graphs
+        save_graphs=save_graphs,
     )
     plot_spider_chart(
         "random_forest",
         [accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt],
         show_graphs=show_graphs,
-        save_graphs=save_graphs
+        save_graphs=save_graphs,
     )
     plot_spider_chart(
         "lightGBM",
         [accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt],
         show_graphs=show_graphs,
-        save_graphs=save_graphs
+        save_graphs=save_graphs,
     )
 
-    accuracy_scores = [accuracy_lrsmt, accuracy_dtsmt, accuracy_rfsmt, accuracy_lgbsmt]
-    roc_auc_scores = [roc_auc_lrsmt, roc_auc_dtsmt, roc_auc_rfsmt, roc_auc_lgbsmt]
-    f1_scores = [f1_score_lrsmt, f1_score_dtsmt, f1_score_rfsmt, f1_score_lgbsmt]
-    coh_kap_scores = [coh_kap_lrsmt, coh_kap_dtsmt, coh_kap_rfsmt, coh_kap_lgbsmt]
-    tt = [tt_lrsmt, tt_dtsmt, tt_rfsmt, tt_lgbsmt]
+    plot_spider_chart(
+        "catboost",
+        [accuracy_cbsmt, roc_auc_cbsmt, f1_score_cbsmt, coh_kap_cbsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "xgboost",
+        [accuracy_xgbsmt, roc_auc_xgbsmt, f1_score_xgbsmt, coh_kap_xgbsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "adaboost",
+        [accuracy_adasmt, roc_auc_adasmt, f1_score_adasmt, coh_kap_adasmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "tabnet",
+        [accuracy_tabnetsmt, roc_auc_tabnetsmt, f1_score_tabnetsmt, coh_kap_tabnetsmt],
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    accuracy_scores = [
+        accuracy_lrsmt,
+        accuracy_dtsmt,
+        accuracy_rfsmt,
+        accuracy_lgbsmt,
+        accuracy_cbsmt,
+        accuracy_xgbsmt,
+        accuracy_adasmt,
+        accuracy_tabnetsmt,
+    ]
+    roc_auc_scores = [
+        roc_auc_lrsmt,
+        roc_auc_dtsmt,
+        roc_auc_rfsmt,
+        roc_auc_lgbsmt,
+        roc_auc_cbsmt,
+        roc_auc_xgbsmt,
+        roc_auc_adasmt,
+        roc_auc_tabnetsmt,
+    ]
+    f1_scores = [
+        f1_score_lrsmt,
+        f1_score_dtsmt,
+        f1_score_rfsmt,
+        f1_score_lgbsmt,
+        f1_score_cbsmt,
+        f1_score_xgbsmt,
+        f1_score_adasmt,
+        f1_score_tabnetsmt,
+    ]
+    coh_kap_scores = [
+        coh_kap_lrsmt,
+        coh_kap_dtsmt,
+        coh_kap_rfsmt,
+        coh_kap_lgbsmt,
+        coh_kap_cbsmt,
+        coh_kap_xgbsmt,
+        coh_kap_adasmt,
+        coh_kap_tabnetsmt,
+    ]
+    tt = [
+        tt_lrsmt,
+        tt_dtsmt,
+        tt_rfsmt,
+        tt_lgbsmt,
+        tt_cbsmt,
+        tt_xgbsmt,
+        tt_adasmt,
+        tt_tabnetsmt,
+    ]
 
     model_data = {
         "Model": [
@@ -233,10 +484,10 @@ def explore_models(
             "Decision Tree",
             "Random Forest",
             "LightGBM",
-            # "Catboost",
-            # "XGBoost",
-            # "AdaBoost",
-            # "TabNet",
+            "Catboost",
+            "XGBoost",
+            "AdaBoost",
+            "TabNet",
         ],
         "Accuracy": accuracy_scores,
         "ROC_AUC": roc_auc_scores,
