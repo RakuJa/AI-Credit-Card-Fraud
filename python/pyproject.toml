@@ -2,7 +2,7 @@
 name = "ai-fraud-detection"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = ">=3.13"
+requires-python = "==3.12"
 dependencies = [
     "polars[pandas, numpy, pyarrow]",
     "scikit-learn",
@@ -21,7 +21,13 @@ dependencies = [
     "nbformat",
     "ipython",
     "python-dotenv",
+    "onnxmltools",
+    "onnxruntime"
 ]
+
+[tool.uv.sources]
+onnxmltools = { git = "https://github.com/onnx/onnxmltools" }
+
 
 [dependency-groups]
 lint = [

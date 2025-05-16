@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import torch
 from matplotlib import pyplot as plt
@@ -12,8 +10,8 @@ import seaborn as sns
 
 from model_handler import run_model
 import lightgbm as lgb
-import catboost as cb
 import xgboost as xgb
+import catboost as cb
 from sklearn.ensemble import AdaBoostClassifier
 
 from tabnet_model import run_tabnet_model

@@ -35,71 +35,71 @@ use fake::Dummy;
 // 25691.16
 pub struct Transaction {
     #[dummy(faker = "-100.0..=100.0")]
-    v1: f64,
+    v1: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v2: f64,
+    v2: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v3: f64,
+    v3: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v4: f64,
+    v4: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v5: f64,
+    v5: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v6: f64,
+    v6: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v7: f64,
+    v7: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v8: f64,
+    v8: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v9: f64,
+    v9: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v10: f64,
+    v10: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v11: f64,
+    v11: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v12: f64,
+    v12: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v13: f64,
+    v13: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v14: f64,
+    v14: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v15: f64,
+    v15: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v16: f64,
+    v16: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v17: f64,
+    v17: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v18: f64,
+    v18: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v19: f64,
+    v19: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v20: f64,
+    v20: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v21: f64,
+    v21: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v22: f64,
+    v22: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v23: f64,
+    v23: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v24: f64,
+    v24: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v25: f64,
+    v25: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v26: f64,
+    v26: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v27: f64,
+    v27: f32,
     #[dummy(faker = "-100.0..=100.0")]
-    v28: f64,
+    v28: f32,
     #[dummy(faker = "0.0..=200000.0")]
-    pub time: f64,
+    pub time: f32,
     #[dummy(faker = "0.0..=30000.0")]
-    pub amount: f64,
+    pub amount: f32,
 }
 
-impl TryFrom<Vec<f64>> for Transaction {
+impl TryFrom<Vec<f32>> for Transaction {
     type Error = ();
 
-    fn try_from(v: Vec<f64>) -> Result<Self, Self::Error> {
+    fn try_from(v: Vec<f32>) -> Result<Self, Self::Error> {
         if v.len() < 30 {
             Err(())
         } else {
@@ -139,7 +139,7 @@ impl TryFrom<Vec<f64>> for Transaction {
     }
 }
 
-impl From<Transaction> for Vec<f64> {
+impl From<Transaction> for Vec<f32> {
     fn from(t: Transaction) -> Self {
         vec![
             t.v1, t.v2, t.v3, t.v4, t.v5, t.v6, t.v7, t.v8, t.v9, t.v10, t.v11, t.v12, t.v13,

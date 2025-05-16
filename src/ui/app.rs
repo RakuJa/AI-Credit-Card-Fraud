@@ -67,6 +67,7 @@ impl eframe::App for MainApp {
             state.current_transaction.time = msg.time;
             state.current_transaction.is_fraud = msg.is_fraud;
             state.current_transaction.certainty = msg.certainty;
+            state.current_transaction.count = msg.count;
         }
         ctx.request_repaint();
         CentralPanel::default().show(ctx, |ui| {

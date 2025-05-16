@@ -2,7 +2,10 @@ import os
 from pathlib import Path
 
 import joblib
-from lightgbm import LGBMClassifier
+import numpy as np
+import onnxmltools.convert.xgboost
+from onnxconverter_common import FloatTensorType
+from xgboost import XGBClassifier
 from polars import DataFrame
 
 from data_explorer import explore_dataset
@@ -31,13 +34,23 @@ def main():
             show_graphs=False,
             save_graphs=True,
         )
-    if Path("model/lgb.pkl").exists():
-        lgb_opt: LGBMClassifier = joblib.load("model/lgb.pkl")
+    if Path("model/xgb.json").exists():
+        xgb_opt: XGBClassifier = XGBClassifier()
+        xgb_opt.load_model("model/xgb.json")
     else:
-        lgb_opt: LGBMClassifier = execute(x_train_smt, y_train_smt, x_test, y_test)
-        joblib.dump(lgb_opt, "model/lgb.pkl")
-        lgb_opt.booster_.save_model("model/mode.txt")
-    model_performance(lgb_opt, df, x_test, y_test)
+        xgb_opt: XGBClassifier = execute(x_train_smt, y_train_smt, x_test, y_test)
+        joblib.dump(xgb_opt, "model/xgb.pkl")
+        xgb_opt.save_model("model/xgb.json")
+    save_to_onnx(xgb_opt, "model/model.onnx")
+
+    model_performance(xgb_opt, df, x_test, y_test)
+
+def save_to_onnx(xgb_opt: XGBClassifier, file_path: str):
+    onnx_model = onnxmltools.convert.xgboost.convert(model=xgb_opt, initial_types=[
+        ("input", FloatTensorType([None, 30]))
+    ],target_opset=15)
+
+    onnxmltools.save_model(onnx_model, file_path)
 
 
 if __name__ == "__main__":

@@ -1,8 +1,7 @@
 import numpy as np
 import polars as pd
 import optuna  # pip install optuna
-import lightgbm as lgb
-from lightgbm import LGBMClassifier
+import xgboost as xgb
 from polars import DataFrame
 import plotly.graph_objs as go
 import plotly.subplots as tls
@@ -23,24 +22,23 @@ from model_handler import run_model
 
 
 def objective(trial, x_train_smt, y_train_smt):
-    max_depth = trial.suggest_int("max_depth", 2, 14)
     param_grid = {
         #         "device_type": trial.suggest_categorical("device_type", ['gpu']),
         # "n_estimators": trial.suggest_categorical("n_estimators", 1,300 ),
         "learning_rate": trial.suggest_float("learning_rate", 0.0001, 0.3),
-        "num_leaves": trial.suggest_int("num_leaves", 4, 2**max_depth),
-        "min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 5, 500),
+        #"num_leaves": trial.suggest_int("num_leaves", 4, 2**max_depth),
+        #"min_data_in_leaf": trial.suggest_int("min_data_in_leaf", 5, 500),
         "max_bin": trial.suggest_int("max_bin", 10, 300),
-        "lambda_l1": trial.suggest_int("lambda_l1", 0, 100, step=5),
-        "lambda_l2": trial.suggest_int("lambda_l2", 0, 100, step=5),
-        "min_gain_to_split": trial.suggest_float("min_gain_to_split", 0, 15),
-        "bagging_fraction": trial.suggest_float(
-            "bagging_fraction", 0.2, 0.95, step=0.1
-        ),
-        "bagging_freq": trial.suggest_categorical("bagging_freq", [1]),
-        "feature_fraction": trial.suggest_float(
-            "feature_fraction", 0.2, 0.95, step=0.1
-        ),
+        #"lambda_l1": trial.suggest_int("lambda_l1", 0, 100, step=5),
+        #"lambda_l2": trial.suggest_int("lambda_l2", 0, 100, step=5),
+        #"min_gain_to_split": trial.suggest_float("min_gain_to_split", 0, 15),
+        #"bagging_fraction": trial.suggest_float(
+        #    "bagging_fraction", 0.2, 0.95, step=0.1
+        #),
+        #"bagging_freq": trial.suggest_categorical("bagging_freq", [1]),
+        #"feature_fraction": trial.suggest_float(
+        #    "feature_fraction", 0.2, 0.95, step=0.1
+        #),
     }
     # scoring = {'accuracy' : make_scorer(accuracy_score),
     #      'precision' : make_scorer(precision_score),
@@ -48,7 +46,8 @@ def objective(trial, x_train_smt, y_train_smt):
     #    'f1_score' : make_scorer(f1_score)}
 
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    model = lgb.LGBMClassifier(**param_grid)
+
+    model = xgb.XGBClassifier(**param_grid)
     model.fit(x_train_smt, y_train_smt)
     scores = cross_val_score(
         model,
@@ -77,23 +76,23 @@ def execute(
     for key, value in study.best_params.items():
         print(f"\t\t{key}: {value}")
 
-    param_lgb = {
+    param_xgb = {
         "max_depth": 13,
         "learning_rate": 0.22690320686746146,
-        "num_leaves": 501,
-        "min_data_in_leaf": 168,
+        #"num_leaves": 501,
+        #"min_data_in_leaf": 168,
         "max_bin": 61,
-        "lambda_l1": 0,
-        "lambda_l2": 0,
-        "min_gain_to_split": 1.2780588498979437,
-        "bagging_fraction": 0.9,
-        "bagging_freq": 1,
-        "feature_fraction": 0.2,
+        #"lambda_l1": 0,
+        #"lambda_l2": 0,
+        #"min_gain_to_split": 1.2780588498979437,
+        #"bagging_fraction": 0.9,
+        #"bagging_freq": 1,
+        #"feature_fraction": 0.2,
     }
 
-    lgb_opt = lgb.LGBMClassifier(**param_lgb)
+    xgb_opt = xgb.XGBClassifier(**param_xgb)
     run_model(
-        model=lgb_opt,
+        model=xgb_opt,
         x_train=x_train_smt,
         y_train=y_train_smt,
         x_test=x_test,
@@ -101,16 +100,16 @@ def execute(
         show_graph=False,
         save_graph=False,
         verbose=False,
-        model_name="LightGBM",
+        model_name="XGBoost",
     )
-    return lgb_opt
+    return xgb_opt
 
 
 pio.renderers.default = "colab"
 
 
 def model_performance(
-    model: LGBMClassifier, df: DataFrame, x_test: np.array, y_test: pd.Series
+    model: xgb.XGBClassifier, df: DataFrame, x_test: np.array, y_test: pd.Series
 ):
     y_test = pd.DataFrame(y_test).to_numpy()
     y_pred = model.predict(x_test)
@@ -256,7 +255,7 @@ def model_performance(
 
     fig["layout"].update(
         showlegend=False,
-        title="Model performance report" + "LightGBM after tuning",
+        title="Model performance report" + "XGBoost after tuning",
         autosize=False,
         height=1500,
         width=830,

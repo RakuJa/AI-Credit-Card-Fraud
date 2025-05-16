@@ -40,7 +40,6 @@ log = "0.4.27"
 
 maplit = "1.0.2"
 
-lightgbm3 = "1.0.7"
 fake = { version = "4", features = ["derive"] }
 
 uuid = { version = "1.16", features = ["v4"] }
@@ -53,4 +52,16 @@ egui = "0.31"
 egui_virtual_list = "0.7.0"
 rand = "0.9.1"
 
+lightgbm3 = { version = "1.0.7", optional = true }
+ort = { version = "2.0.0-rc.9", optional = true, features = ["ndarray"]}
+ndarray = {version = "0.16.1", optional = true}
+
 egui_font_loader = "1.0.0"
+
+[features]
+onnx = ["dep:ort", "dep:ndarray"]
+lightgbm = ["dep:lightgbm3"]
+default = ["onnx"]
+
+
+[build-dependencies]

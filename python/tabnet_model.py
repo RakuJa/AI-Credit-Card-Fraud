@@ -13,12 +13,6 @@ from sklearn.metrics import (
     roc_curve,
     confusion_matrix,
 )
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-import torch.nn.functional as F
-
-import random
-
-from pytorch_tabnet.pretraining import TabNetPretrainer
 from pytorch_tabnet.tab_model import TabNetClassifier
 from pytorch_tabnet.metrics import Metric
 from pathlib import Path
@@ -117,15 +111,15 @@ def run_tabnet_model(
     y_pred = model.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
     roc_auc = roc_auc_score(y_test, y_pred)
-    precision = precision_score(y_test, y_pred)
-    recall = recall_score(y_test, y_pred)
+    _precision = precision_score(y_test, y_pred)
+    _recall = recall_score(y_test, y_pred)
     f1 = f1_score(y_test, y_pred)
     coh_kap = cohen_kappa_score(y_test, y_pred)
     time_taken = time.time() - t0
     print("Accuracy = {}".format(accuracy))
     print("ROC Area under Curve = {}".format(roc_auc))
-    # print("Precision  = {}".format(precision))
-    # print("Recall  = {}".format(recall))
+    # print("Precision  = {}".format(_precision))
+    # print("Recall  = {}".format(_recall))
     print("F1 Score  = {}".format(f1))
     print("Cohen's Kappa = {}".format(coh_kap))
     print("Time taken = {}".format(time_taken))
