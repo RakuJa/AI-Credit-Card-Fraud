@@ -53,15 +53,13 @@ egui_virtual_list = "0.7.0"
 rand = "0.9.1"
 
 lightgbm3 = { version = "1.0.7", optional = true }
-ort = { version = "2.0.0-rc.9", optional = true, features = ["ndarray"]}
-ndarray = {version = "0.16.1", optional = true}
+ort = { version = "2.0.0-rc.9", features = ["ndarray"]}
+ndarray = {version = "0.16.1"}
 
 egui_font_loader = "1.0.0"
 
 [features]
-onnx = ["dep:ort", "dep:ndarray"]
 lightgbm = ["dep:lightgbm3"]
-default = ["onnx"]
 
 
 [build-dependencies]

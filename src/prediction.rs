@@ -5,6 +5,9 @@ use crate::{
 use fake::{Fake, Faker};
 use flume::{Receiver, Sender};
 use log::debug;
+#[cfg(not(feature = "lightgbm"))]
+use ort::session::Session;
+#[cfg(not(feature = "lightgbm"))]
 use ndarray::Array;
 
 #[cfg(feature = "lightgbm")]
@@ -14,10 +17,13 @@ pub fn predict(
     rx_command: &Receiver<Command>,
 ) {
     use lightgbm3::Booster;
-
-    let bst = Booster::from_file(model_path).unwrap();
+    let mut file_path = model_path.to_owned();
+    file_path.push_str("lgb.txt");
+    let bst = Booster::from_file(file_path.as_str()).unwrap();
+    println!("Loaded prediction model from {}", model_path);
     debug!("Starting prediction");
     let mut is_predict_running = true;
+    let mut count = 1;
     loop {
         if is_predict_running {
             let created_transaction: Transaction = Faker.fake();
@@ -25,8 +31,9 @@ pub fn predict(
             let n_features = i32::try_from(features.len()).unwrap();
             let y_pred = bst
                 .predict_with_params(&features, n_features, true, "num_threads=1")
-                .unwrap()[0];
-            let transaction = ParsedTransaction::from((created_transaction, y_pred));
+                .unwrap()[0] as f32;
+            let transaction = ParsedTransaction::from((created_transaction, y_pred, count));
+            count+=1;
             debug!("Sent: {transaction:?}");
             tx_transaction.send(transaction).unwrap();
         }
@@ -38,16 +45,17 @@ pub fn predict(
     }
 }
 
-#[cfg(feature = "onnx")]
+#[cfg(not(feature = "lightgbm"))]
 pub fn predict(
     model_path: &str,
     tx_transaction: &Sender<ParsedTransaction>,
     rx_command: &Receiver<Command>,
 ) {
-    use ort::session::Session;
+    let mut file_path = model_path.to_owned();
+    file_path.push_str("model.onnx");
     let session = Session::builder()
         .unwrap()
-        .commit_from_file(model_path)
+        .commit_from_file(file_path)
         .unwrap();
 
     debug!("Starting prediction");
