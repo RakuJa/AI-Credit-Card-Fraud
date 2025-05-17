@@ -22,9 +22,26 @@ _Built with_
 
 sudo pacman -Syu libclang-dev libgtk-3-dev libxcb-render0-dev libxcb-shape0-dev libxcb-xfixes0-dev libxkbcommon-dev libssl-dev
 
-### Run it
+### How to run
+
+create a .env file like this.
+
+MODEL_PATH=path/to/model/folder/
+
+The model must be named lgb.txt if lightgbm and model.onnx if onnx
+```dotenv
+MODEL_PATH=python/model/
+RUST_LOG=warn
+```
+
+#### ONNX
 ```bash
 cargo run --release
+```
+
+#### LightGBM
+```bash
+cargo run --release --features lightgbm
 ```
 
 ## Training
@@ -67,6 +84,22 @@ After that run the main.py file.
     <td width="50%"><img src="python/images/logistic_regression_confusion_matrix.png"></td>
     <td width="50%"><img src="python/images/lightGBM_confusion_matrix.png"></td>
   </tr>
+  <tr>
+    <td width="50%">AdaBoost Confusion Matrix</td>
+    <td width="50%">CatBoost Confusion Matrix</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/adaboost_confusion_matrix.png"></td>
+    <td width="50%"><img src="python/images/catboost_confusion_matrix.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">XGBoost Confusion Matrix</td>
+    <td width="50%">TabNet Confusion Matrix</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/xgboost_confusion_matrix.png"></td>
+    <td width="50%"><img src="python/images/tabnet_confusion_matrix.png"></td>
+  </tr>
 </table>
 
 ##### Roc Curves
@@ -87,6 +120,22 @@ After that run the main.py file.
   <tr>
     <td width="50%"><img src="python/images/logistic_regression_roc_curve.png"></td>
     <td width="50%"><img src="python/images/lightGBM_roc_curve.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">AdaBoost Roc Curve</td>
+    <td width="50%">CatBoost Roc Curve</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/adaboost_roc_curve.png"></td>
+    <td width="50%"><img src="python/images/catboost_roc_curve.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">XGBoost Roc Curve</td>
+    <td width="50%">TabNet Roc Curve</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/xgboost_roc_curve.png"></td>
+    <td width="50%"><img src="python/images/tabnet_roc_curve.png"></td>
   </tr>
 </table>
 
@@ -109,11 +158,31 @@ After that run the main.py file.
     <td width="50%"><img src="python/images/logistic_regression_spider_chart.png"></td>
     <td width="50%"><img src="python/images/lightGBM_spider_chart.png"></td>
   </tr>
+  <tr>
+    <td width="50%">AdaBoost Spider Chart</td>
+    <td width="50%">CatBoost Spider Chart</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/adaboost_spider_chart.png"></td>
+    <td width="50%"><img src="python/images/catboost_spider_chart.png"></td>
+  </tr>
+  <tr>
+    <td width="50%">XGBoost Spider Chart</td>
+    <td width="50%">TabNet Spider Chart</td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="python/images/xgboost_spider_chart.png"></td>
+    <td width="50%"><img src="python/images/tabnet_spider_chart.png"></td>
+  </tr>
 </table>
 
 ##### Model F1 Score and Time
 
 ![Model training results](python/images/models_f1_and_time.png)
 
-Random Forest and LightGBM are the best w.r.t. all the parameters we've chosen.
-But Random Forest is too slow and we choose LightGBM.
+Random Forest, XGBoost and TabNet are the best w.r.t. all the parameters we've chosen.
+* Random Forest: Best F1 score but slow
+* TabNet: Good F1 score, slowest (even using GPU)
+* XGBoost: Good F1 score, fastest
+
+We will choose XGBoost to have a good trade off between time and F1 score.
