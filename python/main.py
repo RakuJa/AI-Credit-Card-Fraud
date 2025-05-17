@@ -45,10 +45,13 @@ def main():
 
     model_performance(xgb_opt, df, x_test, y_test)
 
+
 def save_to_onnx(xgb_opt: XGBClassifier, file_path: str):
-    onnx_model = onnxmltools.convert.xgboost.convert(model=xgb_opt, initial_types=[
-        ("input", FloatTensorType([None, 30]))
-    ],target_opset=15)
+    onnx_model = onnxmltools.convert.xgboost.convert(
+        model=xgb_opt,
+        initial_types=[("input", FloatTensorType([None, 30]))],
+        target_opset=15,
+    )
 
     onnxmltools.save_model(onnx_model, file_path)
 

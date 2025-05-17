@@ -170,6 +170,11 @@ def explore_dataset(
     if show_graphs:
         plt.show()
 
+    # Time inverse correlation
+    plot_feature_corr_scatter(
+        df, ("v3", "time"), "time_and_v3_inv_correlation", save_graphs
+    )
+
     # Amount correlation
 
     # Direct correlation

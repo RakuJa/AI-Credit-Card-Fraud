@@ -53,7 +53,6 @@ def custom_plot_confusion_matrix(
     else:
         print("Confusion matrix, without normalization")
 
-
     plt.imshow(cm, interpolation="nearest", cmap=cmap)
     plt.title(title, fontsize=14)
     plt.colorbar()
@@ -99,7 +98,7 @@ def run_tabnet_model(
             y_train=y_train,
             eval_set=[(x_train, y_train), (x_test, y_test)],
             eval_name=["train", "valid"],
-            max_epochs=200, #200, metto 10
+            max_epochs=200,  # 200, metto 10
             patience=50,
             batch_size=1024 * 15,
             virtual_batch_size=256 * 10,
