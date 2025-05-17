@@ -178,7 +178,8 @@ def model_performance(
     )
 
     # Feature importance
-    coefficients = pd.DataFrame({"coefficients": model.feature_importances_})
+    feature_importance = model.get_booster().get_score(importance_type='weight')
+    coefficients = pd.DataFrame({"coefficients": feature_importance.values()})
     column_data = pd.DataFrame(
         {"features": df.drop("amount_log").drop("class").columns}
     )
