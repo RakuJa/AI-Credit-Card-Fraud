@@ -6,9 +6,9 @@ use fake::{Fake, Faker};
 use flume::{Receiver, Sender};
 use log::debug;
 #[cfg(not(feature = "lightgbm"))]
-use ort::session::Session;
-#[cfg(not(feature = "lightgbm"))]
 use ndarray::Array;
+#[cfg(not(feature = "lightgbm"))]
+use ort::session::Session;
 
 #[cfg(feature = "lightgbm")]
 pub fn predict(
@@ -33,7 +33,7 @@ pub fn predict(
                 .predict_with_params(&features, n_features, true, "num_threads=1")
                 .unwrap()[0] as f32;
             let transaction = ParsedTransaction::from((created_transaction, y_pred, count));
-            count+=1;
+            count += 1;
             debug!("Sent: {transaction:?}");
             tx_transaction.send(transaction).unwrap();
         }
