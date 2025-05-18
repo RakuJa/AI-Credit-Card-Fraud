@@ -2,6 +2,7 @@ from typing import Any
 
 import numpy as np
 import polars as pd
+from matplotlib import pyplot as plt
 from polars import DataFrame
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import RobustScaler
@@ -24,7 +25,9 @@ def _preprocess(df: DataFrame) -> DataFrame:
     return df
 
 
-def prepare_dataset(df: DataFrame) -> Any:
+def prepare_dataset(
+    df: DataFrame, show_graphs: bool = False, save_graphs: bool = False
+) -> Any:
     df = _preprocess(df)
     x = df.drop(["class", "time"])
     y = df["class"]
@@ -48,4 +51,43 @@ def prepare_dataset(df: DataFrame) -> Any:
 
     print("Resampled dataset shape %s" % Counter(y_train_smt))
 
+    barplot_data(y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs)
+
     return df, x_train_smt, y_train_smt, x_test, y_test
+
+
+def barplot_data(
+    y_train, y_train_smt, show_graph: bool = False, save_graph: bool = False
+):
+    plt.figure(figsize=(14, 6))
+    class_colors = {0: "skyblue", 1: "salmon"}
+
+    # First subplot - Original data
+    plt.subplot(1, 2, 1)
+    unique, counts = np.unique(y_train, return_counts=True)
+    bars = plt.bar(unique, counts)
+    # Assign colors based on class
+    for bar, cls in zip(bars, unique):
+        bar.set_color(class_colors[cls])
+    plt.title("Class Distribution - Original Data")
+    plt.xlabel("Class")
+    plt.ylabel("Count")
+    plt.xticks(unique)
+
+    # Second subplot - SMOTE data
+    plt.subplot(1, 2, 2)
+    unique_smt, counts_smt = np.unique(y_train_smt, return_counts=True)
+    bars = plt.bar(unique_smt, counts_smt)
+    # Assign colors based on class
+    for bar, cls in zip(bars, unique):
+        bar.set_color(class_colors[cls])
+    plt.title("Class Distribution - After SMOTE")
+    plt.xlabel("Class")
+    plt.ylabel("Count")
+    plt.xticks(unique_smt)
+
+    plt.tight_layout()
+    if show_graph:
+        plt.show()
+    if save_graph:
+        plt.savefig("images/SMOTE_balanced_dataset.png", transparent=True)

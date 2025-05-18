@@ -20,19 +20,24 @@ from dotenv import load_dotenv
 
 def main():
     load_dotenv()  # take environment variables
-
+    save_graphs = True
+    show_graphs = False
     raw_data: DataFrame = load_dataset("dataset/data.arff")
     if os.getenv("EXPLORE_DATASET", "TRUE").upper() == "TRUE":
-        _df = explore_dataset(df=raw_data.clone(), show_graphs=False, save_graphs=True)
-    df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(df=raw_data)
+        _df = explore_dataset(
+            df=raw_data.clone(), show_graphs=show_graphs, save_graphs=save_graphs
+        )
+    df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(
+        df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+    )
     if os.getenv("EXPLORE_MODELS", "TRUE").upper() == "TRUE":
         explore_models(
             x_train_smt,
             y_train_smt,
             x_test,
             y_test,
-            show_graphs=False,
-            save_graphs=True,
+            show_graphs=show_graphs,
+            save_graphs=save_graphs,
         )
     if Path("model/xgb.json").exists():
         xgb_opt: XGBClassifier = XGBClassifier()
