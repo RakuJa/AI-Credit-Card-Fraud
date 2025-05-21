@@ -15,7 +15,11 @@ from sklearn.metrics import (
 
 
 def plot_roc_cur(
-    model_name: str, fper, tper, show_graph: bool = False, save_graph: bool = False
+    model_name: str,
+    fper,
+    tper,
+    show_graph: bool = False,
+    save_graph: bool = False,
 ):
     plt.clf()
     plt.cla()
@@ -26,7 +30,7 @@ def plot_roc_cur(
     plt.title("Receiver Operating Characteristic (ROC) Curve")
     plt.legend()
     if save_graph:
-        plt.savefig(f"images/{model_name}_roc_curve.png", transparent=True)
+        plt.savefig(f"images/models/roc_curve/{model_name}.png", transparent=True)
     if show_graph:
         plt.show()
     plt.clf()
@@ -88,7 +92,10 @@ def run_model(
     )
     plt.title("Confusion Matrix")
     if save_graph:
-        plt.savefig(f"images/{model_name}_confusion_matrix.png", transparent=True)
+        plt.savefig(
+            f"images/models/confusion_matrix/{model_name}.png",
+            transparent=True,
+        )
     if show_graph:
         plt.show()
 

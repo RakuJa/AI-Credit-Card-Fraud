@@ -1,13 +1,12 @@
 import os
 from pathlib import Path
 
-import joblib
-import numpy as np
 import onnxmltools.convert.xgboost
 from onnxconverter_common import FloatTensorType
 from xgboost import XGBClassifier
 from polars import DataFrame
 
+import data_parser
 from data_explorer import explore_dataset
 from fine_tuning import execute, model_performance
 from model_explorer import (
@@ -27,9 +26,11 @@ def main():
         _df = explore_dataset(
             df=raw_data.clone(), show_graphs=show_graphs, save_graphs=save_graphs
         )
+    data_parser.check_validation_method(raw_data)
     df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(
         df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
     )
+
     if os.getenv("EXPLORE_MODELS", "TRUE").upper() == "TRUE":
         explore_models(
             x_train_smt,
@@ -39,13 +40,17 @@ def main():
             show_graphs=show_graphs,
             save_graphs=save_graphs,
         )
-    if Path("model/xgb.json").exists():
+    execute_chosen_model(df, x_test, y_test, x_train_smt, y_train_smt)
+
+
+def execute_chosen_model(df, x_test, y_test, x_train_smt, y_train_smt):
+    json_path: str = "model/xgb.json"
+    if Path(json_path).exists():
         xgb_opt: XGBClassifier = XGBClassifier()
-        xgb_opt.load_model("model/xgb.json")
+        xgb_opt.load_model(json_path)
     else:
         xgb_opt: XGBClassifier = execute(x_train_smt, y_train_smt, x_test, y_test)
-        joblib.dump(xgb_opt, "model/xgb.pkl")
-        xgb_opt.save_model("model/xgb.json")
+        xgb_opt.save_model(json_path)
     save_to_onnx(xgb_opt, "model/model.onnx")
 
     model_performance(xgb_opt, df, x_test, y_test)

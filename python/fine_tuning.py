@@ -109,7 +109,10 @@ pio.renderers.default = "colab"
 
 
 def model_performance(
-    model: xgb.XGBClassifier, df: DataFrame, x_test: np.array, y_test: pd.Series
+    model: xgb.XGBClassifier,
+    df: DataFrame,
+    x_test: np.array,
+    y_test: pd.Series,
 ):
     y_test = pd.DataFrame(y_test).to_numpy()
     y_pred = model.predict(x_test)

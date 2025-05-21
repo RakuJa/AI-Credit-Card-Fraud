@@ -37,7 +37,7 @@ def explore_dataset(
     _ax = sns.countplot(x="class", data=df, hue="class", legend=False)
 
     if save_graphs:
-        plt.savefig("images/imbalanced_dataset.png", transparent=True)
+        plt.savefig("images/dataset/imbalanced_dataset.png", transparent=True)
 
     # Describes time and amount values
     print(df[["time", "amount"]].describe())
@@ -94,7 +94,7 @@ def explore_dataset(
     axs[1].set_title("Distribution of Genuine Transactions")
 
     if save_graphs:
-        plt.savefig("images/time_distribution.png", transparent=True)
+        plt.savefig("images/dataset/time_distribution.png", transparent=True)
 
     fig, axs = plt.subplots(ncols=2, figsize=(16, 4))
     sns.histplot(fraud["amount"], bins=100, color="red", ax=axs[0])
@@ -104,7 +104,7 @@ def explore_dataset(
     axs[1].set_title("Distribution of Normal Transactions")
 
     if save_graphs:
-        plt.savefig("images/transaction_distribution.png", transparent=True)
+        plt.savefig("images/dataset/transaction_distribution.png", transparent=True)
 
     # Log transforms are useful when applied to skewed distributions
     # because they tend to expand values in the lower magnitude range
@@ -133,7 +133,7 @@ def explore_dataset(
     ax1.set_title("Whole Dataset feature correlation")
     ax1.set_yticklabels(df.columns, rotation=0)
     if save_graphs:
-        plt.savefig("images/feature_correlation.png", transparent=True)
+        plt.savefig("images/dataset/feature_correlation.png", transparent=True)
     if show_graphs:
         plt.show()
 
@@ -166,7 +166,9 @@ def explore_dataset(
     ax2.set_title("Normal")
     ax2.set_yticklabels(df.columns, rotation=0)
     if save_graphs:
-        plt.savefig("images/feature_correlation_comparison.png", transparent=True)
+        plt.savefig(
+            "images/dataset/feature_correlation_comparison.png", transparent=True
+        )
     if show_graphs:
         plt.show()
 
@@ -223,4 +225,4 @@ def plot_feature_corr_scatter(
         transform=s.ax.transAxes,
     )
     if save_graph:
-        plt.savefig(f"images/{file_name}.png", transparent=True)
+        plt.savefig(f"images/dataset/{file_name}.png", transparent=True)

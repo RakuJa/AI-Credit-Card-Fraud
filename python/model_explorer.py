@@ -293,7 +293,10 @@ def tabnet(
 
 
 def visualize_model_accuracy_and_time(
-    model_data, show_graph: bool = True, save_graph: bool = False
+    model_data,
+    title: str = "models_f1_and_time",
+    show_graph: bool = True,
+    save_graph: bool = False,
 ):
     data = pd.DataFrame(model_data)
 
@@ -319,7 +322,7 @@ def visualize_model_accuracy_and_time(
     ax2 = sns.lineplot(x="Model", y="F1 Score", data=data, sort=False, color=color)
     ax2.tick_params(axis="y", color=color)
     if save_graph:
-        plt.savefig("images/models_f1_and_time.png", transparent=True)
+        plt.savefig(f"images/models/{title}.png", transparent=True)
     if show_graph:
         plt.show()
 
@@ -518,6 +521,6 @@ def plot_spider_chart(
     ax.set_yticklabels([])
     ax.set_title("Model Performance Radar Chart", size=14, pad=20)
     if save_graphs:
-        plt.savefig(f"images/{model_name}_spider_chart", transparent=True)
+        plt.savefig(f"images/models/spider_chart/{model_name}", transparent=True)
     if show_graphs:
         plt.show()

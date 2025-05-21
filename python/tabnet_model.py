@@ -75,7 +75,10 @@ def custom_plot_confusion_matrix(
     plt.ylabel("True label")
     plt.xlabel("Predicted label")
     if save_graph:
-        plt.savefig(f"images/{model_name}_confusion_matrix.png", transparent=True)
+        plt.savefig(
+            f"images/models/confusion_matrix/{model_name}.png",
+            transparent=True,
+        )
 
 
 def run_tabnet_model(
