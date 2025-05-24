@@ -295,7 +295,7 @@ def tabnet(
 def visualize_model_accuracy_and_time(
     model_data,
     title: str = "models_f1_and_time",
-    show_graph: bool = True,
+    show_graph: bool = False,
     save_graph: bool = False,
 ):
     data = pd.DataFrame(model_data)

@@ -70,9 +70,7 @@ def _prepare_w_holdout(
     x_train_smt, y_train_smt = smt.fit_resample(x_train, y_train)
     print("Resampled dataset shape %s" % Counter(y_train_smt))
 
-    barplot_data(
-        "Hold-Out", y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs
-    )
+    barplot_data(y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs)
 
     return df, x_train_smt, y_train_smt, x_test, y_test
 
@@ -94,15 +92,13 @@ def _prepare_w_k_fold(
     x_train_smt, y_train_smt = smt.fit_resample(x_train, y_train)
     print("Resampled dataset shape %s" % Counter(y_train_smt))
 
-    barplot_data(
-        "Hold-Out", y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs
-    )
+    barplot_data(y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs)
 
     return df, x_train_smt, y_train_smt, x_test, y_test
 
 
 def barplot_data(
-    method, y_train, y_train_smt, show_graph: bool = False, save_graph: bool = False
+    y_train, y_train_smt, show_graph: bool = False, save_graph: bool = False
 ):
     plt.figure(figsize=(14, 6))
     class_colors = {0: "skyblue", 1: "salmon"}
@@ -135,9 +131,7 @@ def barplot_data(
     if show_graph:
         plt.show()
     if save_graph:
-        plt.savefig(
-            f"images/models/{method}/SMOTE_balanced_dataset.png", transparent=True
-        )
+        plt.savefig(f"images/models/SMOTE_balanced_dataset.png", transparent=True)
 
 
 def check_validation_method(
@@ -157,41 +151,63 @@ def check_validation_method(
     df = _preprocess(copy.deepcopy(df))
     x = df.drop(["class", "time"]).to_pandas()
     y = df["class"].to_pandas()
-    ho_f1_scores = []
-    kf_f1_scores = []
-    ho_time_taken = []
-    kf_time_taken = []
-    for model in get_model_list():
-        ((ho, ho_time), (kf, kf_time)) = explore_validators(x, y, model)
-        ho_f1_scores.append(ho)
-        ho_time_taken.append(ho_time)
-        kf_f1_scores.append(kf)
-        kf_time_taken.append(kf_time)
+    for smote_perc in [0.1, 0.25, 0.5]:
+        ho_f1_scores = []
+        kf5_f1_scores = []
+        kf10_f1_scores = []
+        ho_time_taken = []
+        kf5_time_taken = []
+        kf10_time_taken = []
+        for model in get_model_list():
+            ((ho, ho_time), (kf5, kf5_time), (kf10, kf10_time)) = explore_validators(
+                x.values, y.values, model, smote_percentage=smote_perc
+            )
+            ho_f1_scores.append(ho)
+            ho_time_taken.append(ho_time)
+            kf5_f1_scores.append(kf5)
+            kf5_time_taken.append(kf5_time)
+            kf10_f1_scores.append(kf10)
+            kf10_time_taken.append(kf10_time)
 
-    visualize_model_accuracy_and_time(
-        {
-            "Model": models,
-            "F1 Score": ho_f1_scores,
-            "Time taken": ho_time_taken,
-        },
-        "Hold-Out-models_f1_and_time",
-        show_graphs,
-        save_graphs,
+        visualize_model_accuracy_and_time(
+            {
+                "Model": models,
+                "F1 Score": ho_f1_scores,
+                "Time taken": ho_time_taken,
+            },
+            f"Hold-Out/SMOTE{smote_perc}-models_f1_and_time",
+            show_graphs,
+            save_graphs,
+        )
+        visualize_model_accuracy_and_time(
+            {
+                "Model": models,
+                "F1 Score": kf5_f1_scores,
+                "Time taken": kf5_time_taken,
+            },
+            f"K-Fold-5/SMOTE{smote_perc}-models_f1_and_time",
+            show_graphs,
+            save_graphs,
+        )
+
+        visualize_model_accuracy_and_time(
+            {
+                "Model": models,
+                "F1 Score": kf10_f1_scores,
+                "Time taken": kf10_time_taken,
+            },
+            f"K-Fold-10/SMOTE{smote_perc}-models_f1_and_time",
+            show_graphs,
+            save_graphs,
+        )
+
+
+def explore_validators(
+    x, y, model, smote_percentage: float = 0.1
+) -> ((float, float), (float, float)):
+    pipeline = make_pipeline(
+        SMOTE(sampling_strategy=smote_percentage, random_state=42), model
     )
-    visualize_model_accuracy_and_time(
-        {
-            "Model": models,
-            "F1 Score": kf_f1_scores,
-            "Time taken": kf_time_taken,
-        },
-        "K-Fold-models_f1_and_time",
-        show_graphs,
-        save_graphs,
-    )
-
-
-def explore_validators(x, y, model) -> ((float, float), (float, float)):
-    pipeline = make_pipeline(SMOTE(sampling_strategy=0.1, random_state=42), model)
     ## 1. Hold-Out Validation with SMOTE
     curr_time = time.time()
     x_train, x_test, y_train, y_test = train_test_split(
@@ -201,11 +217,17 @@ def explore_validators(x, y, model) -> ((float, float), (float, float)):
     pipeline.fit(x_train, y_train)
     holdout_score = f1_score(y_test, pipeline.predict(x_test))
     ho_time_taken = time.time() - curr_time
-    ## 2. K-Fold Cross-Validation with SMOTE
+    ## 2. K-Fold 5 Cross-Validation with SMOTE
     curr_time = time.time()
-    kfold = KFold(n_splits=5, shuffle=True, random_state=42)
-    kfold_scores = cross_val_score(pipeline, x, y, cv=kfold, scoring="f1")
-    kf_time_taken = time.time() - curr_time
+    kfold5 = KFold(n_splits=5, shuffle=True, random_state=42)
+    kfold5_scores = cross_val_score(pipeline, x, y, cv=kfold5, scoring="f1")
+    kf5_time_taken = time.time() - curr_time
+
+    ## 3. K-Fold 10 Cross-Validation with SMOTE
+    curr_time = time.time()
+    kfold10 = KFold(n_splits=10, shuffle=True, random_state=42)
+    kfold10_scores = cross_val_score(pipeline, x, y, cv=kfold10, scoring="f1")
+    kf10_time_taken = time.time() - curr_time
 
     ## 3. Leave-One-Out with SMOTE (careful with large datasets)
     # LOO is generally not recommended with SMOTE for very large datasets
@@ -214,7 +236,11 @@ def explore_validators(x, y, model) -> ((float, float), (float, float)):
     # loo_scores = cross_val_score(pipeline, x, y, cv=loo, scoring='accuracy')
 
     # print(f"\nLOO CV with SMOTE - Mean Accuracy: {np.mean(loo_scores):.4f}")
-    return (holdout_score, ho_time_taken), (np.mean(kfold_scores), kf_time_taken)
+    return (
+        (holdout_score, ho_time_taken),
+        (np.mean(kfold5_scores), kf5_time_taken),
+        (np.mean(kfold10_scores), kf10_time_taken),
+    )
 
 
 def get_model_list() -> list:

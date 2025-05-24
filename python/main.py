@@ -26,7 +26,9 @@ def main():
         _df = explore_dataset(
             df=raw_data.clone(), show_graphs=show_graphs, save_graphs=save_graphs
         )
-    data_parser.check_validation_method(raw_data)
+    data_parser.check_validation_method(
+        raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+    )
     df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(
         df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
     )
