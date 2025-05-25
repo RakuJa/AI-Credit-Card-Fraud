@@ -29,6 +29,9 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
 from model_explorer import visualize_model_accuracy_and_time
+import seaborn as sns
+
+import pickle
 
 
 def _preprocess(df: DataFrame) -> DataFrame:
@@ -151,29 +154,24 @@ def check_validation_method(
     df = _preprocess(copy.deepcopy(df))
     x = df.drop(["class", "time"]).to_pandas()
     y = df["class"].to_pandas()
+    result_dicts = {
+        "Hold-Out": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
+        "KF5": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
+        "KF10": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
+    }
     for smote_perc in [0.1, 0.25, 0.5]:
-        ho_f1_scores = []
-        kf5_f1_scores = []
-        kf10_f1_scores = []
-        ho_time_taken = []
-        kf5_time_taken = []
-        kf10_time_taken = []
         for model in get_model_list():
             ((ho, ho_time), (kf5, kf5_time), (kf10, kf10_time)) = explore_validators(
                 x.values, y.values, model, smote_percentage=smote_perc
             )
-            ho_f1_scores.append(ho)
-            ho_time_taken.append(ho_time)
-            kf5_f1_scores.append(kf5)
-            kf5_time_taken.append(kf5_time)
-            kf10_f1_scores.append(kf10)
-            kf10_time_taken.append(kf10_time)
-
+            result_dicts = _update_result_dicts(result_dicts, ("Hold-Out", smote_perc), ho_time, ho)
+            result_dicts = _update_result_dicts(result_dicts, ("KF5", smote_perc), kf5_time, kf5)
+            result_dicts = _update_result_dicts(result_dicts, ("KF10", smote_perc), kf10_time, kf10)
         visualize_model_accuracy_and_time(
             {
                 "Model": models,
-                "F1 Score": ho_f1_scores,
-                "Time taken": ho_time_taken,
+                "F1 Score": result_dicts.get("Hold-Out").get(smote_perc)[1],
+                "Time taken": result_dicts.get("Hold-Out").get(smote_perc)[0],
             },
             f"Hold-Out/SMOTE{smote_perc}-models_f1_and_time",
             show_graphs,
@@ -182,8 +180,8 @@ def check_validation_method(
         visualize_model_accuracy_and_time(
             {
                 "Model": models,
-                "F1 Score": kf5_f1_scores,
-                "Time taken": kf5_time_taken,
+                "F1 Score": result_dicts.get("KF5").get(smote_perc)[1],
+                "Time taken": result_dicts.get("KF5").get(smote_perc)[0],
             },
             f"K-Fold-5/SMOTE{smote_perc}-models_f1_and_time",
             show_graphs,
@@ -193,13 +191,63 @@ def check_validation_method(
         visualize_model_accuracy_and_time(
             {
                 "Model": models,
-                "F1 Score": kf10_f1_scores,
-                "Time taken": kf10_time_taken,
+                "F1 Score": result_dicts.get("KF10").get(smote_perc)[1],
+                "Time taken": result_dicts.get("KF10").get(smote_perc)[0],
             },
             f"K-Fold-10/SMOTE{smote_perc}-models_f1_and_time",
             show_graphs,
             save_graphs,
         )
+    all_in_one(result_dicts, show_graphs, save_graphs)
+
+
+def all_in_one(x: dict, show_graph: bool = False, save_graph: bool = True):
+    # Transform dict into dataframe
+    data = []
+    for smote_perc, inner_dict in x.items():
+        inner_dict: dict
+        for val_method, tpl in inner_dict.items():
+            for tempo, f1 in zip(tpl[0], tpl[1]):
+                data.append(
+                    {
+                        "method": val_method,
+                        "smote": smote_perc,
+                        "time": tempo,
+                        "f1_score": f1,
+                    }
+                )
+
+    with open("run_data.pickle", "wb") as handle:
+        pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    table = pd.from_dicts(data)
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(
+        data=table.to_pandas(),
+        x="method",
+        y="f1_score",
+        hue="smote",
+        style="smote",
+        palette="viridis",
+    )
+
+    # Customize the plot
+    plt.title("F1 Score by Method and SMOTE Percentage")
+    plt.xlabel("Method")
+    plt.ylabel("F1 Score")
+    plt.legend(title="SMOTE %", bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()  # Adjust layout to prevent legend cutoff
+    if show_graph:
+        plt.show()
+    if save_graph:
+        plt.savefig(f"images/models/SMOTE_Validation_summary.png", transparent=True)
+
+
+
+def _update_result_dicts(x: dict, key: (float, float), elapsed, f1: float) -> dict:
+    x[key[0]][key[1]][0].append(elapsed)
+    x[key[0]][key[1]][1].append(f1)
+    return x
 
 
 def explore_validators(
