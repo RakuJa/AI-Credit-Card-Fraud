@@ -1,4 +1,5 @@
 import copy
+import pathlib
 import time
 from typing import Any
 
@@ -159,54 +160,65 @@ def check_validation_method(
         "KF5": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
         "KF10": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
     }
-    for smote_perc in [0.1, 0.25, 0.5]:
-        for model in get_model_list():
-            ((ho, ho_time), (kf5, kf5_time), (kf10, kf10_time)) = explore_validators(
-                x.values, y.values, model, smote_percentage=smote_perc
+    if pathlib.Path("run_data.pickle").exists():
+        with open("run_data.pickle", "rb") as f:
+            data = pickle.load(f)
+    else:
+        for smote_perc in [0.1, 0.25, 0.5]:
+            for model in get_model_list():
+                ((ho, ho_time), (kf5, kf5_time), (kf10, kf10_time)) = (
+                    explore_validators(
+                        x.values, y.values, model, smote_percentage=smote_perc
+                    )
+                )
+                result_dicts = _update_result_dicts(
+                    result_dicts, ("Hold-Out", smote_perc), ho_time, ho
+                )
+                result_dicts = _update_result_dicts(
+                    result_dicts, ("KF5", smote_perc), kf5_time, kf5
+                )
+                result_dicts = _update_result_dicts(
+                    result_dicts, ("KF10", smote_perc), kf10_time, kf10
+                )
+            visualize_model_accuracy_and_time(
+                {
+                    "Model": models,
+                    "F1 Score": result_dicts.get("Hold-Out").get(smote_perc)[1],
+                    "Time taken": result_dicts.get("Hold-Out").get(smote_perc)[0],
+                },
+                f"Hold-Out/SMOTE{smote_perc}-models_f1_and_time",
+                show_graphs,
+                save_graphs,
             )
-            result_dicts = _update_result_dicts(result_dicts, ("Hold-Out", smote_perc), ho_time, ho)
-            result_dicts = _update_result_dicts(result_dicts, ("KF5", smote_perc), kf5_time, kf5)
-            result_dicts = _update_result_dicts(result_dicts, ("KF10", smote_perc), kf10_time, kf10)
-        visualize_model_accuracy_and_time(
-            {
-                "Model": models,
-                "F1 Score": result_dicts.get("Hold-Out").get(smote_perc)[1],
-                "Time taken": result_dicts.get("Hold-Out").get(smote_perc)[0],
-            },
-            f"Hold-Out/SMOTE{smote_perc}-models_f1_and_time",
-            show_graphs,
-            save_graphs,
-        )
-        visualize_model_accuracy_and_time(
-            {
-                "Model": models,
-                "F1 Score": result_dicts.get("KF5").get(smote_perc)[1],
-                "Time taken": result_dicts.get("KF5").get(smote_perc)[0],
-            },
-            f"K-Fold-5/SMOTE{smote_perc}-models_f1_and_time",
-            show_graphs,
-            save_graphs,
-        )
+            visualize_model_accuracy_and_time(
+                {
+                    "Model": models,
+                    "F1 Score": result_dicts.get("KF5").get(smote_perc)[1],
+                    "Time taken": result_dicts.get("KF5").get(smote_perc)[0],
+                },
+                f"K-Fold-5/SMOTE{smote_perc}-models_f1_and_time",
+                show_graphs,
+                save_graphs,
+            )
 
-        visualize_model_accuracy_and_time(
-            {
-                "Model": models,
-                "F1 Score": result_dicts.get("KF10").get(smote_perc)[1],
-                "Time taken": result_dicts.get("KF10").get(smote_perc)[0],
-            },
-            f"K-Fold-10/SMOTE{smote_perc}-models_f1_and_time",
-            show_graphs,
-            save_graphs,
-        )
-    all_in_one(result_dicts, show_graphs, save_graphs)
+            visualize_model_accuracy_and_time(
+                {
+                    "Model": models,
+                    "F1 Score": result_dicts.get("KF10").get(smote_perc)[1],
+                    "Time taken": result_dicts.get("KF10").get(smote_perc)[0],
+                },
+                f"K-Fold-10/SMOTE{smote_perc}-models_f1_and_time",
+                show_graphs,
+                save_graphs,
+            )
+        data = pickle_rick(result_dicts)
+    plot_validation_data(data, show_graphs, save_graphs)
 
 
-def all_in_one(x: dict, show_graph: bool = False, save_graph: bool = True):
-    # Transform dict into dataframe
+def pickle_rick(x: dict[str, dict[float, list[tuple[float, float]]]]):
     data = []
-    for smote_perc, inner_dict in x.items():
-        inner_dict: dict
-        for val_method, tpl in inner_dict.items():
+    for val_method, inner_dict in x.items():
+        for smote_perc, tpl in inner_dict.items():
             for tempo, f1 in zip(tpl[0], tpl[1]):
                 data.append(
                     {
@@ -219,29 +231,57 @@ def all_in_one(x: dict, show_graph: bool = False, save_graph: bool = True):
 
     with open("run_data.pickle", "wb") as handle:
         pickle.dump(data, handle, protocol=pickle.HIGHEST_PROTOCOL)
-    table = pd.from_dicts(data)
-    plt.figure(figsize=(10, 6))
-    sns.lineplot(
-        data=table.to_pandas(),
-        x="method",
-        y="f1_score",
-        hue="smote",
-        style="smote",
-        palette="viridis",
-    )
 
-    # Customize the plot
-    plt.title("F1 Score by Method and SMOTE Percentage")
-    plt.xlabel("Method")
-    plt.ylabel("F1 Score")
-    plt.legend(title="SMOTE %", bbox_to_anchor=(1.05, 1), loc="upper left")
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()  # Adjust layout to prevent legend cutoff
+    return data
+
+
+def plot_validation_data(
+    data: list[dict], show_graph: bool = False, save_graph: bool = True
+):
+    df = pd.from_dicts(data)
+
+    palette = [
+        "#735DEE",
+        "#DE217D",
+        "#FF5F01",
+        "#F0E442",
+        "#0072B2",
+        "#D55E00",
+        "#CC79A7",
+    ]
+    sns.set_palette(palette)
+
+    g = sns.FacetGrid(df, col="smote", hue="method", col_wrap=3, height=4, sharey=True)
+    g.map(sns.lineplot, "time", "f1_score", estimator=None, sort=False, alpha=0.1)
+    g.map(sns.scatterplot, "time", "f1_score", s=80, alpha=0.8)
+
+    for ax in g.axes.flat:
+        smote_method: str = ax.get_title()
+
+        subplot_data = df.filter(pd.col("smote") == float(smote_method.split("=")[1]))
+
+        for row in subplot_data.iter_rows():
+            ax.text(
+                x=row[2],
+                y=row[3],
+                s=f"{row[3]:.2f}",
+                fontsize=8,
+                ha="center",
+                va="bottom",
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none", pad=1),
+            )
+
+    g.set(xscale="log")
+    g.set_axis_labels("Time (log scale)", "F1 Score")
+    g.add_legend(title="Method")
+    g.set_titles(col_template="{col_name}")
+    g.figure.subplots_adjust(top=0.9)
+    g.figure.suptitle("Time vs F1 Score with Method Trends by SMOTE")
+
     if show_graph:
         plt.show()
     if save_graph:
-        plt.savefig(f"images/models/SMOTE_Validation_summary.png", transparent=True)
-
+        plt.savefig(f"images/models/SMOTE_Validation_summary.png", dpi=1200, transparent=True)
 
 
 def _update_result_dicts(x: dict, key: (float, float), elapsed, f1: float) -> dict:
