@@ -51,15 +51,9 @@ def _preprocess(df: DataFrame) -> DataFrame:
     return df
 
 
-def prepare_dataset(
+def prepare_dataset_w_holdout(
     df: DataFrame, show_graphs: bool = False, save_graphs: bool = False
 ) -> Any:
-    return _prepare_w_holdout(df, show_graphs, save_graphs)
-
-
-def _prepare_w_holdout(
-    df: DataFrame, show_graphs: bool = False, save_graphs: bool = False
-):
     df = _preprocess(df)
     x = df.drop(["class", "time"])
     y = df["class"]
@@ -79,26 +73,11 @@ def _prepare_w_holdout(
     return df, x_train_smt, y_train_smt, x_test, y_test
 
 
-def _prepare_w_k_fold(
-    df: DataFrame, show_graphs: bool = False, save_graphs: bool = False
-):
+def prepare_dataset_for_kfold(df: DataFrame) -> Any:
     df = _preprocess(df)
     x = df.drop(["class", "time"])
     y = df["class"]
-    x_train, x_test, y_train, y_test = train_test_split(
-        x, y, test_size=0.2, random_state=0
-    )
-    scaler = RobustScaler()
-    x_train = scaler.fit_transform(x_train)
-    x_test = scaler.transform(x_test)
-    print("Original dataset shape %s" % Counter(y_train))
-    smt = SMOTE(random_state=42, sampling_strategy=0.1)
-    x_train_smt, y_train_smt = smt.fit_resample(x_train, y_train)
-    print("Resampled dataset shape %s" % Counter(y_train_smt))
-
-    barplot_data(y_train, y_train_smt, show_graph=show_graphs, save_graph=save_graphs)
-
-    return df, x_train_smt, y_train_smt, x_test, y_test
+    return x, y
 
 
 def barplot_data(
@@ -281,7 +260,9 @@ def plot_validation_data(
     if show_graph:
         plt.show()
     if save_graph:
-        plt.savefig(f"images/models/SMOTE_Validation_summary.png", dpi=1200, transparent=True)
+        plt.savefig(
+            f"images/models/SMOTE_Validation_summary.png", dpi=1200, transparent=True
+        )
 
 
 def _update_result_dicts(x: dict, key: (float, float), elapsed, f1: float) -> dict:

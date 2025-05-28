@@ -1,8 +1,12 @@
 import numpy as np
 import torch
+from imblearn.over_sampling import SMOTE
+from imblearn.pipeline import Pipeline
 from matplotlib import pyplot as plt
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import RobustScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 import polars as pd
@@ -524,3 +528,277 @@ def plot_spider_chart(
         plt.savefig(f"images/models/spider_chart/{model_name}", transparent=True)
     if show_graphs:
         plt.show()
+
+
+def update_dict(
+    x: dict,
+    model: str,
+    accuracy,
+    roc_auc,
+    f1_score,
+    coh_kap,
+    tt,
+):
+    model = model.lower()
+    x.setdefault(model, {}).setdefault("accuracy", []).append(accuracy)
+    x.setdefault(model, {}).setdefault("roc_auc", []).append(roc_auc)
+    x.setdefault(model, {}).setdefault("f1_score", []).append(f1_score)
+    x.setdefault(model, {}).setdefault("coh_kap", []).append(coh_kap)
+    x.setdefault(model, {}).setdefault("tt", []).append(tt)
+    return x
+
+
+def get_spider_values_list(
+    results: dict[str, dict[str, list[float]]], model_name: str
+) -> list[float]:
+    model_name = model_name.lower()
+    return [
+        np.mean(results[model_name]["accuracy"]).astype(float),
+        np.mean(results[model_name]["roc_auc"]).astype(float),
+        np.mean(results[model_name]["f1_score"]).astype(float),
+        np.mean(results[model_name]["coh_kap"]).astype(float),
+        # np.mean(results[model_name]["tt"]).astype(float),
+    ]
+
+
+def get_values_of_stat(
+    results: dict[str, dict[str, list[float]]], score: str
+) -> list[float]:
+    res = []
+    for model_name, diz in results:
+        for stat_name, values in diz:
+            if stat_name == score:
+                res.append(np.mean(values))
+    return res
+
+
+def kf_explore_models(
+    x,
+    y,
+    k_folds: int = 5,
+    sampling_strat: float = 0.1,
+    show_graphs: bool = False,
+    save_graphs: bool = True,
+):
+    kf = KFold(n_splits=k_folds, shuffle=True)
+    results = {}
+    for train_idx, test_idx in kf.split(x):
+        x_train, x_test = x[train_idx], x[test_idx]
+        y_train, y_test = y[train_idx], y[test_idx]
+
+        # Create pipeline with RobustScaler and SMOTE
+        pipeline = Pipeline(
+            [
+                ("scaler", RobustScaler()),  # Robust scaling
+                ("smote", SMOTE(sampling_strategy=sampling_strat)),
+                # Add your classifier here if needed
+            ]
+        )
+        # 2. Fit pipeline to training data
+        pipeline.fit(x_train, y_train)
+
+        # 3. Transform training data through each step manually
+        x_train_scaled = pipeline.named_steps["scaler"].transform(x_train)
+        x_train, y_train = pipeline.named_steps["smote"].fit_resample(
+            x_train_scaled, y_train
+        )
+
+        # 4. Transform test data (only scaling)
+        x_test = pipeline.named_steps["scaler"].transform(x_test)
+
+        # x_train, y_train = SMOTE(sampling_strategy=sampling_strat).fit_resample(
+        #    x_train, y_train
+        # )
+        accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt, tt_lrsmt = (
+            logistic_regression(
+                x_train, y_train, x_test, y_test, show_graphs, save_graphs
+            )
+        )
+        # accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt, tt_dtsmt = (
+        #    decision_tree(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        # )
+        accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt, tt_rfsmt = (
+            random_forest(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
+
+        """
+        accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt, tt_lgbsmt = (
+            lightGBM(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
+
+        accuracy_cbsmt, roc_auc_cbsmt, f1_score_cbsmt, coh_kap_cbsmt, tt_cbsmt = (
+            catboost(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
+
+        accuracy_xgbsmt, roc_auc_xgbsmt, f1_score_xgbsmt, coh_kap_xgbsmt, tt_xgbsmt = (
+            xgboost(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
+
+        accuracy_adasmt, roc_auc_adasmt, f1_score_adasmt, coh_kap_adasmt, tt_adasmt = (
+            adaboost(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
+        (
+            accuracy_tabnetsmt,
+            roc_auc_tabnetsmt,
+            f1_score_tabnetsmt,
+            coh_kap_tabnetsmt,
+            tt_tabnetsmt,
+        ) = tabnet(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        """
+
+        update_dict(
+            results,
+            "logistic_regression",
+            accuracy_lrsmt,
+            roc_auc_lrsmt,
+            f1_score_lrsmt,
+            coh_kap_lrsmt,
+            tt_lrsmt,
+        )
+        # update_dict(
+        #    results,
+        #    "decision_tree",
+        #    accuracy_dtsmt,
+        #    roc_auc_dtsmt,
+        #    f1_score_dtsmt,
+        #    coh_kap_dtsmt,
+        #    tt_dtsmt,
+        # )
+        update_dict(
+            results,
+            "random_forest",
+            accuracy_rfsmt,
+            roc_auc_rfsmt,
+            f1_score_rfsmt,
+            coh_kap_rfsmt,
+            tt_rfsmt,
+        )
+        """
+        update_dict(
+            results,
+            "lightGBM",
+            accuracy_lgbsmt,
+            roc_auc_lgbsmt,
+            f1_score_lgbsmt,
+            coh_kap_lgbsmt,
+            tt_lgbsmt,
+        )
+        update_dict(
+            results,
+            "catboost",
+            accuracy_cbsmt,
+            roc_auc_cbsmt,
+            f1_score_cbsmt,
+            coh_kap_cbsmt,
+            tt_cbsmt,
+        )
+        update_dict(
+            results,
+            "XGBoost",
+            accuracy_xgbsmt,
+            roc_auc_xgbsmt,
+            f1_score_xgbsmt,
+            coh_kap_xgbsmt,
+            tt_xgbsmt,
+        )
+        update_dict(
+            results,
+            "adaBoost",
+            accuracy_adasmt,
+            roc_auc_adasmt,
+            f1_score_adasmt,
+            coh_kap_adasmt,
+            tt_adasmt,
+        )
+        update_dict(
+            results,
+            "tabnet",
+            accuracy_tabnetsmt,
+            roc_auc_tabnetsmt,
+            f1_score_tabnetsmt,
+            coh_kap_tabnetsmt,
+            tt_tabnetsmt,
+        )
+    """
+
+    plot_spider_chart(
+        "logistic_regression",
+        get_spider_values_list(results, "logistic_regression"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+    # plot_spider_chart(
+    #    "decision_tree",
+    #    get_spider_values_list(results, "decision_tree"),
+    #    show_graphs=show_graphs,
+    #    save_graphs=save_graphs,
+    # )
+    plot_spider_chart(
+        "random_forest",
+        get_spider_values_list(results, "decision_tree"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+    """
+    plot_spider_chart(
+        "lightGBM",
+        get_spider_values_list(results, "lightGBM"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "catboost",
+        get_spider_values_list(results, "catboost"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "xgboost",
+        get_spider_values_list(results, "xgboost"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "adaboost",
+        get_spider_values_list(results, "adaboost"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+    plot_spider_chart(
+        "tabnet",
+        get_spider_values_list(results, "tabnet"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+    """
+
+    accuracy_scores = get_values_of_stat(results, "accuracy")
+    roc_auc_scores = get_values_of_stat(results, "roc_auc")
+    f1_scores = get_values_of_stat(results, "f1_score")
+    coh_kap_scores = get_values_of_stat(results, "coh_kap")
+    tt = get_values_of_stat(results, "tt")
+
+    model_data = {
+        "Model": [
+            "Logistic Regression",
+            # "Decision Tree",
+            "Random Forest",
+            # "LightGBM",
+            # "Catboost",
+            # "XGBoost",
+            # "AdaBoost",
+            # "TabNet",
+        ],
+        "Accuracy": accuracy_scores,
+        "ROC_AUC": roc_auc_scores,
+        "F1 Score": f1_scores,
+        "Cohen_Kappa": coh_kap_scores,
+        "Time taken": tt,
+    }
+    visualize_model_accuracy_and_time(
+        model_data, show_graph=show_graphs, save_graph=save_graphs
+    )

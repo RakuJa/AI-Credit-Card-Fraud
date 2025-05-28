@@ -11,8 +11,12 @@ from data_explorer import explore_dataset
 from fine_tuning import execute, model_performance
 from model_explorer import (
     explore_models,
+    kf_explore_models,
 )
-from data_parser import prepare_dataset
+from data_parser import (
+    prepare_dataset_w_holdout,
+    prepare_dataset_for_kfold,
+)
 from utils import load_dataset
 from dotenv import load_dotenv
 
@@ -26,11 +30,42 @@ def main():
         _df = explore_dataset(
             df=raw_data.clone(), show_graphs=show_graphs, save_graphs=save_graphs
         )
-    data_parser.check_validation_method(
-        raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+    if os.getenv("EXPLORE_VALIDATION_METHODS", "TRUE").upper() == "TRUE":
+        data_parser.check_validation_method(
+            raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+        )
+    validation_method = os.getenv("VALIDATION_METHOD", "HOLD-OUT").upper()
+    match validation_method:
+        case "HOLD-OUT":
+            handle_hold_out(
+                df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+            )
+        case "KF5":
+            handle_kf(
+                df=raw_data, folds=5, show_graphs=show_graphs, save_graphs=save_graphs
+            )
+        case "KF10":
+            handle_kf(
+                df=raw_data, folds=10, show_graphs=show_graphs, save_graphs=save_graphs
+            )
+
+
+def handle_kf(df, folds: int, show_graphs: bool = False, save_graphs: bool = True):
+    sampling_strat = float(os.getenv("SAMPLING_STRATEGY", "0.1"))
+    x, y = prepare_dataset_for_kfold(df=df)
+    kf_explore_models(
+        x=x,
+        y=y,
+        k_folds=folds,
+        sampling_strat=sampling_strat,
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
     )
-    df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset(
-        df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+
+
+def handle_hold_out(df, show_graphs: bool = False, save_graphs: bool = True):
+    df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset_w_holdout(
+        df=df, show_graphs=show_graphs, save_graphs=save_graphs
     )
 
     if os.getenv("EXPLORE_MODELS", "TRUE").upper() == "TRUE":
