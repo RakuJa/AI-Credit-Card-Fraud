@@ -91,24 +91,19 @@ def run_tabnet_model(
     save_graph: bool = False,
 ):
     t0 = time.time()
-    model_path: str = "model/tabnet.zip"
-    if Path(model_path).exists():
-        model = TabNetClassifier()
-        model.load_model(model_path)
-    else:
-        model.fit(
-            X_train=x_train,
-            y_train=y_train,
-            eval_set=[(x_train, y_train), (x_test, y_test)],
-            eval_name=["train", "valid"],
-            max_epochs=200,  # 200, metto 10
-            patience=50,
-            batch_size=1024 * 15,
-            virtual_batch_size=256 * 10,
-            num_workers=4,
-            drop_last=False,
-            eval_metric=["f1_score"],
-        )
+    model.fit(
+        X_train=x_train,
+        y_train=y_train,
+        eval_set=[(x_train, y_train), (x_test, y_test)],
+        eval_name=["train", "valid"],
+        max_epochs=200,  # 200, metto 10
+        patience=50,
+        batch_size=1024 * 15,
+        virtual_batch_size=256 * 10,
+        num_workers=4,
+        drop_last=False,
+        eval_metric=["f1_score"],
+    )
 
     y_pred = model.predict(x_test)
     accuracy = accuracy_score(y_test, y_pred)
@@ -142,6 +137,4 @@ def run_tabnet_model(
         save_graph=save_graph,
         show_graph=show_graph,
     )
-
-    model.save_model("model/tabnet")
     return model, accuracy, roc_auc, f1, coh_kap, time_taken

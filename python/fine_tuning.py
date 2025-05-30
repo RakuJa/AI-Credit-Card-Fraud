@@ -2,6 +2,7 @@ import numpy as np
 import polars as pd
 import optuna  # pip install optuna
 import xgboost as xgb
+from plotly.graph_objs import Figure
 from polars import DataFrame
 import plotly.graph_objs as go
 import plotly.subplots as tls
@@ -19,19 +20,31 @@ from sklearn.model_selection import cross_val_score, StratifiedKFold
 from model_handler import run_model
 
 
-def objective(trial, x_train_smt, y_train_smt):
+def objective(trial, x, y):
     param_grid = {
-        "learning_rate": trial.suggest_float("learning_rate", 0.0001, 0.3),
-        "max_bin": trial.suggest_int("max_bin", 10, 300),
+        # Tree params
+        "max_depth": trial.suggest_int("max_depth", 3, 12),
+        "min_child_weight": trial.suggest_int("min_child_weight", 1, 20),
+        "gamma": trial.suggest_float("gamma", 0, 5),
+        # Learning
+        "learning_rate": trial.suggest_float("learning_rate", 0.0001, 0.3, log=True),
+        "n_estimators": trial.suggest_int("n_estimators", 50, 1000),
+        # Randomness & Regularization
+        "subsample": trial.suggest_float("subsample", 0.6, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.6, 1.0),
+        "reg_alpha": trial.suggest_float("reg_alpha", 0, 10),
+        "reg_lambda": trial.suggest_float("reg_lambda", 0, 10),
+        # Imbalanced Data
+        "scale_pos_weight": trial.suggest_float("scale_pos_weight", 1, 10),
     }
-    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    cv = StratifiedKFold(n_splits=5, shuffle=True)
 
     model = xgb.XGBClassifier(**param_grid)
-    model.fit(x_train_smt, y_train_smt)
+    model.fit(x, y)
     scores = cross_val_score(
         model,
-        x_train_smt,
-        y_train_smt,
+        x,
+        y,
         scoring=make_scorer(f1_score, average="weighted", labels=[1]),
         cv=cv,
         n_jobs=-1,
@@ -55,11 +68,7 @@ def execute(
     for key, value in study.best_params.items():
         print(f"\t\t{key}: {value}")
 
-    param_xgb = {
-        "max_depth": 13,
-        "learning_rate": 0.22690320686746146,
-        "max_bin": 61,
-    }
+    param_xgb = study.best_params
 
     xgb_opt = xgb.XGBClassifier(**param_xgb)
     run_model(
@@ -79,19 +88,8 @@ def execute(
 pio.renderers.default = "colab"
 
 
-def model_performance(
-    model: xgb.XGBClassifier,
-    df: DataFrame,
-    x_test: np.array,
-    y_test: pd.Series,
-):
-    y_test = pd.DataFrame(y_test).to_numpy()
-    y_pred = model.predict(x_test)
-    y_score = model.predict_proba(x_test)[:, 1]
-
-    # Conf matrix
-    conf_matrix = confusion_matrix(y_test, y_pred)
-    trace1 = go.Heatmap(
+def confusion_heatmap(conf_matrix):
+    return go.Heatmap(
         z=conf_matrix,
         x=["0 (pred)", "1 (pred)"],
         y=["0 (true)", "1 (true)"],
@@ -102,23 +100,10 @@ def model_performance(
         showscale=False,
     )
 
-    # Show metrics
-    tp = conf_matrix[1, 1]
-    fn = conf_matrix[1, 0]
-    fp = conf_matrix[0, 1]
-    tn = conf_matrix[0, 0]
-    Accuracy = (tp + tn) / (tp + tn + fp + fn)
-    Precision = tp / (tp + fp)
-    Recall = tp / (tp + fn)
-    F1_score = 2 * (
-        ((tp / (tp + fp)) * (tp / (tp + fn))) / ((tp / (tp + fp)) + (tp / (tp + fn)))
-    )
 
-    show_metrics = pd.DataFrame(data=[[Accuracy, Precision, Recall, F1_score]])
-    show_metrics = show_metrics.transpose()
-
+def plot_metrics(show_metrics):
     colors = ["gold", "lightgreen", "lightcoral", "lightskyblue"]
-    trace2 = go.Bar(
+    return go.Bar(
         x=show_metrics.to_numpy()[0],
         y=["Accuracy", "Precision", "Recall", "F1_score"],
         text=np.round(show_metrics.to_numpy()[0], 4),
@@ -127,9 +112,9 @@ def model_performance(
         opacity=0.8,
         marker=dict(color=colors, line=dict(color="#000000", width=1.5)),
     )
-    # Roc curve
-    model_roc_auc = round(roc_auc_score(y_test, y_score), 3)
-    fpr, tpr, t = roc_curve(y_test, y_score)
+
+
+def plot_roc_curve(fpr, tpr, model_roc_auc):
     trace3 = go.Scatter(
         x=fpr,
         y=tpr,
@@ -140,10 +125,11 @@ def model_performance(
     trace4 = go.Scatter(
         x=[0, 1], y=[0, 1], line=dict(color="black", width=1.5, dash="dot")
     )
+    return trace3, trace4
 
-    # Precision-recall curve
-    precision, recall, thresholds = precision_recall_curve(y_test, y_score)
-    trace5 = go.Scatter(
+
+def plot_precision_recall_curve(recall, precision):
+    return go.Scatter(
         x=recall,
         y=precision,
         name="Precision" + str(precision),
@@ -151,22 +137,9 @@ def model_performance(
         fill="tozeroy",
     )
 
-    # Feature importance
-    feature_importance = model.get_booster().get_score(importance_type="weight")
-    coefficients = pd.DataFrame({"coefficients": feature_importance.values()})
-    column_data = pd.DataFrame(
-        {"features": df.drop("amount_log").drop("class").columns}
-    )
 
-    # Combine and process
-    coef_sumry = (
-        coefficients.hstack(column_data)
-        .sort("coefficients", descending=True)
-        .filter(pd.col("coefficients") != 0)
-    )
-
-    # Feature coefficients visualization
-    trace6 = go.Bar(
+def plot_feature_importance(coef_sumry):
+    return go.Bar(
         x=coef_sumry["features"].to_list(),
         y=coef_sumry["coefficients"].to_list(),
         name="coefficients",
@@ -177,26 +150,9 @@ def model_performance(
         ),
     )
 
-    # Cumulative gain
-    pos = (
-        DataFrame(y_test).to_dummies().to_numpy()
-    )  # pandas.get_dummies(y_test).to_numpy()
-    pos = pos[:, 1]
-    npos = np.sum(pos)
-    index = np.argsort(y_score)
-    index = index[::-1]
-    sort_pos = pos[index]
-    # cumulative sum
-    cpos = np.cumsum(sort_pos)
-    # recall
-    recall = cpos / npos
-    # size obs test
-    n = y_test.shape[0]
-    size = np.arange(start=1, stop=369, step=1)
-    # proportion
-    size = size / n
-    # plots
-    trace7 = go.Scatter(
+
+def plot_cumulative_gain(size, recall):
+    return go.Scatter(
         x=size,
         y=recall,
         name="Lift curve",
@@ -204,8 +160,10 @@ def model_performance(
         fill="tozeroy",
     )
 
+
+def plot_empty_fig(model_roc_auc):
     # Subplots
-    fig = tls.make_subplots(
+    return tls.make_subplots(
         rows=4,
         cols=2,
         print_grid=False,
@@ -220,6 +178,8 @@ def model_performance(
         ),
     )
 
+
+def fig_with_traces(fig, trace1, trace2, trace3, trace4, trace5, trace6, trace7):
     fig.add_trace(trace1, 1, 1)
     fig.add_trace(trace2, 1, 2)
     fig.add_trace(trace3, 2, 1)
@@ -246,6 +206,84 @@ def model_performance(
     fig["layout"]["xaxis5"].update(dict(title="Percentage contacted"))
     fig["layout"]["yaxis5"].update(dict(title="Percentage positive targeted"))
     fig.layout.title.font.size = 14
+    return fig
 
-    # fig.show("colab")
+
+def model_performance(
+    model: xgb.XGBClassifier,
+    df: DataFrame,
+    x_test: np.array,
+    y_test: pd.Series,
+):
+    y_test = pd.DataFrame(y_test).to_numpy()
+    y_pred = model.predict(x_test)
+    y_score = model.predict_proba(x_test)[:, 1]
+    # Conf matrix
+    conf_matrix = confusion_matrix(y_test, y_pred)
+    trace1 = confusion_heatmap(conf_matrix)
+
+    # Show metrics
+    tp = conf_matrix[1, 1]
+    fn = conf_matrix[1, 0]
+    fp = conf_matrix[0, 1]
+    tn = conf_matrix[0, 0]
+    Accuracy = (tp + tn) / (tp + tn + fp + fn)
+    Precision = tp / (tp + fp)
+    Recall = tp / (tp + fn)
+    F1_score = 2 * (
+        ((tp / (tp + fp)) * (tp / (tp + fn))) / ((tp / (tp + fp)) + (tp / (tp + fn)))
+    )
+
+    trace2 = plot_metrics(
+        pd.DataFrame(data=[[Accuracy, Precision, Recall, F1_score]]).transpose()
+    )
+
+    # Roc curve
+    model_roc_auc = round(roc_auc_score(y_test, y_score), 3)
+    fpr, tpr, t = roc_curve(y_test, y_score)
+    trace3, trace4 = plot_roc_curve(fpr, tpr, model_roc_auc)
+
+    # Precision-recall curve
+    precision, recall, thresholds = precision_recall_curve(y_test, y_score)
+    trace5 = plot_precision_recall_curve(recall, precision)
+
+    # Feature importance
+    feature_importance = model.get_booster().get_score(importance_type="weight")
+    coefficients = pd.DataFrame({"coefficients": feature_importance.values()})
+    column_data = pd.DataFrame(
+        {"features": df.drop("amount_log").drop("class").columns}
+    )
+
+    # Combine and process
+    coef_sumry = (
+        coefficients.hstack(column_data)
+        .sort("coefficients", descending=True)
+        .filter(pd.col("coefficients") != 0)
+    )
+
+    # Feature coefficients visualization
+    trace6 = plot_feature_importance(coef_sumry)
+
+    # Cumulative gain
+    pos = (
+        DataFrame(y_test).to_dummies().to_numpy()
+    )  # pandas.get_dummies(y_test).to_numpy()
+    pos = pos[:, 1]
+    npos = np.sum(pos)
+    index = np.argsort(y_score)
+    index = index[::-1]
+    sort_pos = pos[index]
+    # cumulative sum
+    cpos = np.cumsum(sort_pos)
+    # recall
+    recall = cpos / npos
+    # size obs test
+    n = y_test.shape[0]
+    size = np.arange(start=1, stop=369, step=1)
+    # proportion
+    size = size / n
+    # plots
+    trace7 = plot_cumulative_gain(size, recall)
+    fig: Figure = plot_empty_fig(model_roc_auc)
+    fig: Figure = fig_with_traces(fig, trace1, trace2, trace3, trace4, trace5, trace6, trace7)
     pio.write_image(fig, "model/result.png")

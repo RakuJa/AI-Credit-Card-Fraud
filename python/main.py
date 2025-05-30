@@ -1,4 +1,5 @@
 import os
+from copy import deepcopy
 from pathlib import Path
 
 import onnxmltools.convert.xgboost
@@ -35,19 +36,30 @@ def main():
             raw_data, show_graphs=show_graphs, save_graphs=save_graphs
         )
     validation_method = os.getenv("VALIDATION_METHOD", "HOLD-OUT").upper()
-    match validation_method:
-        case "HOLD-OUT":
-            handle_hold_out(
-                df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
-            )
-        case "KF5":
-            handle_kf(
-                df=raw_data, folds=5, show_graphs=show_graphs, save_graphs=save_graphs
-            )
-        case "KF10":
-            handle_kf(
-                df=raw_data, folds=10, show_graphs=show_graphs, save_graphs=save_graphs
-            )
+    if os.getenv("EXPLORE_MODELS", "TRUE").upper() == "TRUE":
+        match validation_method:
+            case "HOLD-OUT":
+                handle_hold_out(
+                    df=deepcopy(raw_data), show_graphs=show_graphs, save_graphs=save_graphs
+                )
+            case "KF5":
+                handle_kf(
+                    df=deepcopy(raw_data),
+                    folds=5,
+                    show_graphs=show_graphs,
+                    save_graphs=save_graphs,
+                )
+            case "KF10":
+                handle_kf(
+                    df=deepcopy(raw_data),
+                    folds=10,
+                    show_graphs=show_graphs,
+                    save_graphs=save_graphs,
+                )
+    df, x_train_smt, y_train_smt, x_test, y_test = prepare_dataset_w_holdout(
+        df=raw_data, show_graphs=show_graphs, save_graphs=save_graphs
+    )
+    execute_chosen_model(df, x_test, y_test, x_train_smt, y_train_smt)
 
 
 def handle_kf(df, folds: int, show_graphs: bool = False, save_graphs: bool = True):
@@ -77,7 +89,6 @@ def handle_hold_out(df, show_graphs: bool = False, save_graphs: bool = True):
             show_graphs=show_graphs,
             save_graphs=save_graphs,
         )
-    execute_chosen_model(df, x_test, y_test, x_train_smt, y_train_smt)
 
 
 def execute_chosen_model(df, x_test, y_test, x_train_smt, y_train_smt):

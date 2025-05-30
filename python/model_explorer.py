@@ -565,8 +565,8 @@ def get_values_of_stat(
     results: dict[str, dict[str, list[float]]], score: str
 ) -> list[float]:
     res = []
-    for model_name, diz in results:
-        for stat_name, values in diz:
+    for model_name, diz in results.items():
+        for stat_name, values in diz.items():
             if stat_name == score:
                 res.append(np.mean(values))
     return res
@@ -606,22 +606,18 @@ def kf_explore_models(
         # 4. Transform test data (only scaling)
         x_test = pipeline.named_steps["scaler"].transform(x_test)
 
-        # x_train, y_train = SMOTE(sampling_strategy=sampling_strat).fit_resample(
-        #    x_train, y_train
-        # )
         accuracy_lrsmt, roc_auc_lrsmt, f1_score_lrsmt, coh_kap_lrsmt, tt_lrsmt = (
             logistic_regression(
                 x_train, y_train, x_test, y_test, show_graphs, save_graphs
             )
         )
-        # accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt, tt_dtsmt = (
-        #    decision_tree(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
-        # )
+        accuracy_dtsmt, roc_auc_dtsmt, f1_score_dtsmt, coh_kap_dtsmt, tt_dtsmt = (
+            decision_tree(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
+        )
         accuracy_rfsmt, roc_auc_rfsmt, f1_score_rfsmt, coh_kap_rfsmt, tt_rfsmt = (
             random_forest(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
         )
 
-        """
         accuracy_lgbsmt, roc_auc_lgbsmt, f1_score_lgbsmt, coh_kap_lgbsmt, tt_lgbsmt = (
             lightGBM(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
         )
@@ -644,7 +640,6 @@ def kf_explore_models(
             coh_kap_tabnetsmt,
             tt_tabnetsmt,
         ) = tabnet(x_train, y_train, x_test, y_test, show_graphs, save_graphs)
-        """
 
         update_dict(
             results,
@@ -655,15 +650,15 @@ def kf_explore_models(
             coh_kap_lrsmt,
             tt_lrsmt,
         )
-        # update_dict(
-        #    results,
-        #    "decision_tree",
-        #    accuracy_dtsmt,
-        #    roc_auc_dtsmt,
-        #    f1_score_dtsmt,
-        #    coh_kap_dtsmt,
-        #    tt_dtsmt,
-        # )
+        update_dict(
+            results,
+            "decision_tree",
+            accuracy_dtsmt,
+            roc_auc_dtsmt,
+            f1_score_dtsmt,
+            coh_kap_dtsmt,
+            tt_dtsmt,
+        )
         update_dict(
             results,
             "random_forest",
@@ -673,7 +668,7 @@ def kf_explore_models(
             coh_kap_rfsmt,
             tt_rfsmt,
         )
-        """
+
         update_dict(
             results,
             "lightGBM",
@@ -719,7 +714,6 @@ def kf_explore_models(
             coh_kap_tabnetsmt,
             tt_tabnetsmt,
         )
-    """
 
     plot_spider_chart(
         "logistic_regression",
@@ -727,19 +721,18 @@ def kf_explore_models(
         show_graphs=show_graphs,
         save_graphs=save_graphs,
     )
-    # plot_spider_chart(
-    #    "decision_tree",
-    #    get_spider_values_list(results, "decision_tree"),
-    #    show_graphs=show_graphs,
-    #    save_graphs=save_graphs,
-    # )
     plot_spider_chart(
-        "random_forest",
+        "decision_tree",
         get_spider_values_list(results, "decision_tree"),
         show_graphs=show_graphs,
         save_graphs=save_graphs,
     )
-    """
+    plot_spider_chart(
+        "random_forest",
+        get_spider_values_list(results, "random_forest"),
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
     plot_spider_chart(
         "lightGBM",
         get_spider_values_list(results, "lightGBM"),
@@ -774,7 +767,6 @@ def kf_explore_models(
         show_graphs=show_graphs,
         save_graphs=save_graphs,
     )
-    """
 
     accuracy_scores = get_values_of_stat(results, "accuracy")
     roc_auc_scores = get_values_of_stat(results, "roc_auc")
@@ -785,13 +777,13 @@ def kf_explore_models(
     model_data = {
         "Model": [
             "Logistic Regression",
-            # "Decision Tree",
+            "Decision Tree",
             "Random Forest",
-            # "LightGBM",
-            # "Catboost",
-            # "XGBoost",
-            # "AdaBoost",
-            # "TabNet",
+            "LightGBM",
+            "Catboost",
+            "XGBoost",
+            "AdaBoost",
+            "TabNet",
         ],
         "Accuracy": accuracy_scores,
         "ROC_AUC": roc_auc_scores,
