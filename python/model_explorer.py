@@ -296,18 +296,33 @@ def tabnet(
     )
 
 
-def visualize_model_accuracy_and_time(
-    model_data,
-    title: str = "models_f1_and_time",
+def visualize_models_results(
+    model_data: dict,
     show_graph: bool = False,
     save_graph: bool = False,
 ):
     data = pd.DataFrame(model_data)
+    for key in model_data.keys():
+        if key != "Time taken" and key != "Model":
+            parsed_key = key.replace(" ", "_")
+            _visualize_models_results_y_value_and_time(
+                data=data,
+                y_value=key,
+                title=f"models_{parsed_key}_and_time_taken_comparison",
+                show_graph=show_graph,
+                save_graph=save_graph,
+            )
 
+
+def _visualize_models_results_y_value_and_time(
+    data: pd.Dataframe,
+    y_value: str,
+    title: str,
+    show_graph: bool = False,
+    save_graph: bool = False,
+):
     fig, ax1 = plt.subplots(figsize=(12, 10))
-    ax1.set_title(
-        "Model Comparison: Accuracy and Time taken for execution", fontsize=13
-    )
+    ax1.set_title(title, fontsize=13)
     color = "tab:green"
     ax1.set_xlabel("Model", fontsize=13)
     ax1.set_ylabel("Time taken", fontsize=13, color=color)
@@ -322,8 +337,8 @@ def visualize_model_accuracy_and_time(
     ax1.tick_params(axis="y")
     ax2 = ax1.twinx()
     color = "tab:red"
-    ax2.set_ylabel("F1 Score", fontsize=13, color=color)
-    ax2 = sns.lineplot(x="Model", y="F1 Score", data=data, sort=False, color=color)
+    ax2.set_ylabel(y_value, fontsize=13, color=color)
+    ax2 = sns.lineplot(x="Model", y=y_value, data=data, sort=False, color=color)
     ax2.tick_params(axis="y", color=color)
     if save_graph:
         plt.savefig(f"images/models/{title}.png", transparent=True)
@@ -500,9 +515,7 @@ def explore_models(
         "Cohen_Kappa": coh_kap_scores,
         "Time taken": tt,
     }
-    visualize_model_accuracy_and_time(
-        model_data, show_graph=show_graphs, save_graph=save_graphs
-    )
+    visualize_models_results(model_data, show_graph=show_graphs, save_graph=save_graphs)
 
 
 def plot_spider_chart(
@@ -826,6 +839,6 @@ def _generic_kf_explore_models(
         "Cohen_Kappa": coh_kap_scores,
         "Time taken": tt,
     }
-    visualize_model_accuracy_and_time(
+    visualize_models_results(
         model_data, show_graph=show_graphs, save_graph=save_graphs
     )

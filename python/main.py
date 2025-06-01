@@ -81,7 +81,7 @@ def handle_kf(df, folds: int, show_graphs: bool = False, save_graphs: bool = Tru
 def handle_skf(df, folds: int, show_graphs: bool = False, save_graphs: bool = True):
     sampling_strat = float(os.getenv("SAMPLING_STRATEGY", "0.1"))
     x, y = prepare_dataset_for_kfold(df=df)
-    skf_explore_m+odels(
+    skf_explore_models(
         x=x,
         y=y,
         k_folds=folds,
