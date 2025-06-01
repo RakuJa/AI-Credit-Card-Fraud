@@ -13,6 +13,7 @@ from fine_tuning import execute, model_performance
 from model_explorer import (
     explore_models,
     kf_explore_models,
+    skf_explore_models,
 )
 from data_parser import (
     prepare_dataset_w_holdout,
@@ -40,19 +41,21 @@ def main():
         match validation_method:
             case "HOLD-OUT":
                 handle_hold_out(
-                    df=deepcopy(raw_data), show_graphs=show_graphs, save_graphs=save_graphs
+                    df=deepcopy(raw_data),
+                    show_graphs=show_graphs,
+                    save_graphs=save_graphs,
                 )
-            case "KF5":
+            case "KF":
                 handle_kf(
                     df=deepcopy(raw_data),
                     folds=5,
                     show_graphs=show_graphs,
                     save_graphs=save_graphs,
                 )
-            case "KF10":
-                handle_kf(
+            case "SKF":
+                handle_skf(
                     df=deepcopy(raw_data),
-                    folds=10,
+                    folds=5,
                     show_graphs=show_graphs,
                     save_graphs=save_graphs,
                 )
@@ -66,6 +69,19 @@ def handle_kf(df, folds: int, show_graphs: bool = False, save_graphs: bool = Tru
     sampling_strat = float(os.getenv("SAMPLING_STRATEGY", "0.1"))
     x, y = prepare_dataset_for_kfold(df=df)
     kf_explore_models(
+        x=x,
+        y=y,
+        k_folds=folds,
+        sampling_strat=sampling_strat,
+        show_graphs=show_graphs,
+        save_graphs=save_graphs,
+    )
+
+
+def handle_skf(df, folds: int, show_graphs: bool = False, save_graphs: bool = True):
+    sampling_strat = float(os.getenv("SAMPLING_STRATEGY", "0.1"))
+    x, y = prepare_dataset_for_kfold(df=df)
+    skf_explore_m+odels(
         x=x,
         y=y,
         k_folds=folds,

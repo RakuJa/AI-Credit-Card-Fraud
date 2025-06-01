@@ -5,7 +5,7 @@ from imblearn.pipeline import Pipeline
 from matplotlib import pyplot as plt
 from pytorch_tabnet.tab_model import TabNetClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, StratifiedKFold
 from sklearn.preprocessing import RobustScaler
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
@@ -572,6 +572,24 @@ def get_values_of_stat(
     return res
 
 
+def skf_explore_models(
+    x,
+    y,
+    k_folds: int = 5,
+    sampling_strat: float = 0.1,
+    show_graphs: bool = False,
+    save_graphs: bool = True,
+):
+    _generic_kf_explore_models(
+        StratifiedKFold(n_splits=k_folds, shuffle=True),
+        x,
+        y,
+        sampling_strat,
+        show_graphs,
+        save_graphs,
+    )
+
+
 def kf_explore_models(
     x,
     y,
@@ -580,9 +598,26 @@ def kf_explore_models(
     show_graphs: bool = False,
     save_graphs: bool = True,
 ):
-    kf = KFold(n_splits=k_folds, shuffle=True)
+    _generic_kf_explore_models(
+        KFold(n_splits=k_folds, shuffle=True),
+        x,
+        y,
+        sampling_strat,
+        show_graphs,
+        save_graphs,
+    )
+
+
+def _generic_kf_explore_models(
+    kf,
+    x,
+    y,
+    sampling_strat: float = 0.1,
+    show_graphs: bool = False,
+    save_graphs: bool = True,
+):
     results = {}
-    for train_idx, test_idx in kf.split(x):
+    for train_idx, test_idx in kf.split(x, y):
         x_train, x_test = x[train_idx], x[test_idx]
         y_train, y_test = y[train_idx], y[test_idx]
 

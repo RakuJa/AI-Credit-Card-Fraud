@@ -285,5 +285,7 @@ def model_performance(
     # plots
     trace7 = plot_cumulative_gain(size, recall)
     fig: Figure = plot_empty_fig(model_roc_auc)
-    fig: Figure = fig_with_traces(fig, trace1, trace2, trace3, trace4, trace5, trace6, trace7)
+    fig: Figure = fig_with_traces(
+        fig, trace1, trace2, trace3, trace4, trace5, trace6, trace7
+    )
     pio.write_image(fig, "model/result.png")

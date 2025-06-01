@@ -25,6 +25,7 @@ from sklearn.model_selection import (
     train_test_split,
     KFold,
     cross_val_score,
+    StratifiedKFold,
 )
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
@@ -136,8 +137,8 @@ def check_validation_method(
     y = df["class"].to_pandas()
     result_dicts = {
         "Hold-Out": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
-        "KF5": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
-        "KF10": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
+        "KF": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
+        "SKF": {0.1: ([], []), 0.25: ([], []), 0.5: ([], [])},
     }
     if pathlib.Path("run_data.pickle").exists():
         with open("run_data.pickle", "rb") as f:
@@ -154,10 +155,10 @@ def check_validation_method(
                     result_dicts, ("Hold-Out", smote_perc), ho_time, ho
                 )
                 result_dicts = _update_result_dicts(
-                    result_dicts, ("KF5", smote_perc), kf5_time, kf5
+                    result_dicts, ("KF", smote_perc), kf5_time, kf5
                 )
                 result_dicts = _update_result_dicts(
-                    result_dicts, ("KF10", smote_perc), kf10_time, kf10
+                    result_dicts, ("SKF", smote_perc), kf10_time, kf10
                 )
             visualize_model_accuracy_and_time(
                 {
@@ -172,10 +173,10 @@ def check_validation_method(
             visualize_model_accuracy_and_time(
                 {
                     "Model": models,
-                    "F1 Score": result_dicts.get("KF5").get(smote_perc)[1],
-                    "Time taken": result_dicts.get("KF5").get(smote_perc)[0],
+                    "F1 Score": result_dicts.get("KF").get(smote_perc)[1],
+                    "Time taken": result_dicts.get("KF").get(smote_perc)[0],
                 },
-                f"K-Fold-5/SMOTE{smote_perc}-models_f1_and_time",
+                f"K-Fold/SMOTE{smote_perc}-models_f1_and_time",
                 show_graphs,
                 save_graphs,
             )
@@ -183,10 +184,10 @@ def check_validation_method(
             visualize_model_accuracy_and_time(
                 {
                     "Model": models,
-                    "F1 Score": result_dicts.get("KF10").get(smote_perc)[1],
-                    "Time taken": result_dicts.get("KF10").get(smote_perc)[0],
+                    "F1 Score": result_dicts.get("SKF").get(smote_perc)[1],
+                    "Time taken": result_dicts.get("SKF").get(smote_perc)[0],
                 },
-                f"K-Fold-10/SMOTE{smote_perc}-models_f1_and_time",
+                f"Stratified-K-Fold/SMOTE{smote_perc}-models_f1_and_time",
                 show_graphs,
                 save_graphs,
             )
@@ -288,15 +289,15 @@ def explore_validators(
     ho_time_taken = time.time() - curr_time
     ## 2. K-Fold 5 Cross-Validation with SMOTE
     curr_time = time.time()
-    kfold5 = KFold(n_splits=5, shuffle=True, random_state=42)
-    kfold5_scores = cross_val_score(pipeline, x, y, cv=kfold5, scoring="f1")
-    kf5_time_taken = time.time() - curr_time
+    kfold = KFold(n_splits=5, shuffle=True, random_state=42)
+    kfold_scores = cross_val_score(pipeline, x, y, cv=kfold, scoring="f1")
+    kf_time_taken = time.time() - curr_time
 
     ## 3. K-Fold 10 Cross-Validation with SMOTE
     curr_time = time.time()
-    kfold10 = KFold(n_splits=10, shuffle=True, random_state=42)
-    kfold10_scores = cross_val_score(pipeline, x, y, cv=kfold10, scoring="f1")
-    kf10_time_taken = time.time() - curr_time
+    skfold = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    skfold_scores = cross_val_score(pipeline, x, y, cv=skfold, scoring="f1")
+    skf_time_taken = time.time() - curr_time
 
     ## 3. Leave-One-Out with SMOTE (careful with large datasets)
     # LOO is generally not recommended with SMOTE for very large datasets
@@ -307,8 +308,8 @@ def explore_validators(
     # print(f"\nLOO CV with SMOTE - Mean Accuracy: {np.mean(loo_scores):.4f}")
     return (
         (holdout_score, ho_time_taken),
-        (np.mean(kfold5_scores), kf5_time_taken),
-        (np.mean(kfold10_scores), kf10_time_taken),
+        (np.mean(kfold_scores), kf_time_taken),
+        (np.mean(skfold_scores), skf_time_taken),
     )
 
 
