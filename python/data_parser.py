@@ -30,7 +30,7 @@ from sklearn.model_selection import (
 from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 
-from model_explorer import visualize_model_accuracy_and_time
+from model_explorer import visualize_models_results
 import seaborn as sns
 
 import pickle
@@ -160,7 +160,7 @@ def check_validation_method(
                 result_dicts = _update_result_dicts(
                     result_dicts, ("SKF", smote_perc), kf10_time, kf10
                 )
-            visualize_model_accuracy_and_time(
+            v(
                 {
                     "Model": models,
                     "F1 Score": result_dicts.get("Hold-Out").get(smote_perc)[1],
@@ -170,26 +170,26 @@ def check_validation_method(
                 show_graphs,
                 save_graphs,
             )
-            visualize_model_accuracy_and_time(
+            visualize_models_results(
                 {
                     "Model": models,
                     "F1 Score": result_dicts.get("KF").get(smote_perc)[1],
                     "Time taken": result_dicts.get("KF").get(smote_perc)[0],
                 },
-                f"K-Fold/SMOTE{smote_perc}-models_f1_and_time",
-                show_graphs,
-                save_graphs,
+                title=f"K-Fold/SMOTE{smote_perc}-models_f1_and_time",
+                show_graph=show_graphs,
+                save_graph=save_graphs,
             )
 
-            visualize_model_accuracy_and_time(
+            visualize_models_results(
                 {
                     "Model": models,
                     "F1 Score": result_dicts.get("SKF").get(smote_perc)[1],
                     "Time taken": result_dicts.get("SKF").get(smote_perc)[0],
                 },
-                f"Stratified-K-Fold/SMOTE{smote_perc}-models_f1_and_time",
-                show_graphs,
-                save_graphs,
+                title=f"Stratified-K-Fold/SMOTE{smote_perc}-models_f1_and_time",
+                show_graph=show_graphs,
+                save_graph=save_graphs,
             )
         data = pickle_rick(result_dicts)
     plot_validation_data(data, show_graphs, save_graphs)

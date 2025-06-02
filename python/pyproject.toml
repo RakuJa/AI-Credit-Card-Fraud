@@ -2,7 +2,9 @@
 name = "ai-fraud-detection"
 version = "0.1.0"
 description = "Add your description here"
-requires-python = "==3.12"
+requires-python = ">=3.12"
+
+
 dependencies = [
     "polars[pandas, numpy, pyarrow]",
     "scikit-learn",
@@ -12,12 +14,13 @@ dependencies = [
     "numpy",
     "imbalanced-learn",
     "lightgbm==4.6.0",
+    "torch>=2.7.0",
     "pytorch-tabnet",
     "catboost",
     "xgboost",
     "optuna",
     "plotly",
-    "kaleido==0.2.0",
+    "kaleido==0.1.0.post1",
     "nbformat",
     "ipython",
     "python-dotenv",
@@ -27,7 +30,14 @@ dependencies = [
 
 [tool.uv.sources]
 onnxmltools = { git = "https://github.com/onnx/onnxmltools" }
+torch = [
+  { index = "pytorch-cu118", marker = "sys_platform == 'linux' or sys_platform == 'win32'" },
+]
 
+[[tool.uv.index]]
+name = "pytorch-cu118"
+url = "https://download.pytorch.org/whl/cu118"
+explicit = true
 
 [dependency-groups]
 lint = [

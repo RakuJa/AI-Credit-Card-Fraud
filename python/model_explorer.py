@@ -298,6 +298,7 @@ def tabnet(
 
 def visualize_models_results(
     model_data: dict,
+    title: str = "",
     show_graph: bool = False,
     save_graph: bool = False,
 ):
@@ -305,17 +306,18 @@ def visualize_models_results(
     for key in model_data.keys():
         if key != "Time taken" and key != "Model":
             parsed_key = key.replace(" ", "_")
+            file_name = f"models_{parsed_key}_and_time_taken_comparison"
             _visualize_models_results_y_value_and_time(
                 data=data,
                 y_value=key,
-                title=f"models_{parsed_key}_and_time_taken_comparison",
+                title=title if title else file_name,
                 show_graph=show_graph,
                 save_graph=save_graph,
             )
 
 
 def _visualize_models_results_y_value_and_time(
-    data: pd.Dataframe,
+    data: pd.DataFrame,
     y_value: str,
     title: str,
     show_graph: bool = False,
@@ -839,6 +841,4 @@ def _generic_kf_explore_models(
         "Cohen_Kappa": coh_kap_scores,
         "Time taken": tt,
     }
-    visualize_models_results(
-        model_data, show_graph=show_graphs, save_graph=save_graphs
-    )
+    visualize_models_results(model_data, show_graph=show_graphs, save_graph=save_graphs)
