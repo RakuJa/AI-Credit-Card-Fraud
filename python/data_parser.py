@@ -160,7 +160,7 @@ def check_validation_method(
                 result_dicts = _update_result_dicts(
                     result_dicts, ("SKF", smote_perc), kf10_time, kf10
                 )
-            v(
+            visualize_models_results(
                 {
                     "Model": models,
                     "F1 Score": result_dicts.get("Hold-Out").get(smote_perc)[1],
@@ -274,7 +274,7 @@ def _update_result_dicts(x: dict, key: (float, float), elapsed, f1: float) -> di
 
 def explore_validators(
     x, y, model, smote_percentage: float = 0.1
-) -> ((float, float), (float, float)):
+) -> tuple[tuple[float, float], tuple[float, float], tuple[float, float]]:
     pipeline = make_pipeline(
         SMOTE(sampling_strategy=smote_percentage, random_state=42), model
     )
