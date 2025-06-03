@@ -266,7 +266,7 @@ def plot_validation_data(
         )
 
 
-def _update_result_dicts(x: dict, key: (float, float), elapsed, f1: float) -> dict:
+def _update_result_dicts(x: dict, key: tuple[str, float], elapsed, f1: float) -> dict:
     x[key[0]][key[1]][0].append(elapsed)
     x[key[0]][key[1]][1].append(f1)
     return x

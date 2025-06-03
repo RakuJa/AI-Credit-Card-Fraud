@@ -29,7 +29,7 @@ def logistic_regression(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     params_lr = {"penalty": "l1", "solver": "liblinear"}  # "class_weight": "balanced"}
 
     model_lrsmt = LogisticRegression(**params_lr)
@@ -61,7 +61,7 @@ def decision_tree(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     params_dt = {"max_depth": 16, "max_features": "sqrt"}
 
     model_dtsmt = DecisionTreeClassifier(**params_dt)
@@ -92,7 +92,7 @@ def random_forest(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     # Random Forest with SMOTE
     model_rfsmt = RandomForestClassifier()
     (
@@ -122,7 +122,7 @@ def lightGBM(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     # Light GBM with SMOTE
 
     model_lgbsmt = lgb.LGBMClassifier()
@@ -153,7 +153,7 @@ def catboost(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     params_cb = {"iterations": 20, "max_depth": 16}
 
     model_cbsmt = cb.CatBoostClassifier(**params_cb)
@@ -184,7 +184,7 @@ def xgboost(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     params_xgb = {"n_estimators": 20, "max_depth": 16}
 
     model_xgbsmt = xgb.XGBClassifier(**params_xgb)
@@ -215,7 +215,7 @@ def adaboost(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     model_adasmt = AdaBoostClassifier(
         DecisionTreeClassifier(max_depth=2),
         n_estimators=50,
@@ -249,7 +249,7 @@ def tabnet(
     y_test,
     show_graphs: bool = False,
     save_graphs: bool = False,
-) -> (float, float, float, float, float):
+) -> tuple[float, float, float, float, float]:
     tabnet_params = dict(
         n_d=64,
         n_a=64,
